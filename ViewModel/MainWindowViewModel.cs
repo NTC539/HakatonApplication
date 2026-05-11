@@ -45,4 +45,14 @@ public partial class MainWindowViewModel : ObservableObject
             IsLoading = false;
         }
     }
+    [RelayCommand]
+    private async Task OpenHakatonAsync(int id)
+    {
+        //// Открытие окна деталей
+        //var detailViewModel = new HakatonDetailViewModel(id, ...);
+        //var detailWindow = new HakatonDetailView { DataContext = detailViewModel };
+        //detailWindow.ShowDialog();
+        //// Опционально: обновить список
+        //await LoadHakatonsAsync();
+    }
 }

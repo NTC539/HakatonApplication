@@ -29,7 +29,6 @@ namespace HakatonApplication.Service
             if (!string.IsNullOrWhiteSpace(searchText))
                 query = query.Where(h => h.Name.Contains(searchText) || h.Description.Contains(searchText));
 
-            // 1. Загружаем основные данные
             var mainData = await query
                 .Select(h => new
                 {
@@ -47,28 +46,24 @@ namespace HakatonApplication.Service
 
             var ids = mainData.Select(m => m.Id).ToList();
 
-            // 2. Теги: используем SelectMany
             var tags = await _context.Hakatons
                 .Where(h => ids.Contains(h.Id))
                 .SelectMany(h => h.HakatonTypes.Select(ht => new { HakatonId = h.Id, Tag = ht.TypeName ?? "" }))
                 .Distinct()
                 .ToListAsync();
 
-            // 3. Спонсоры
             var sponsors = await _context.SponsorContributions
                 .Where(sc => ids.Contains(sc.HakatonId))
                 .Select(sc => new { sc.HakatonId, SponsorName = sc.Sponsor.Name ?? "" })
                 .Distinct()
                 .ToListAsync();
 
-            // 4. Эксперты
             var experts = await _context.HakatonRegistrations
                 .Where(r => ids.Contains(r.HakatonId) && r.RoleId == 2 && r.User != null)
                 .Select(r => new { r.HakatonId, ExpertName = (r.User.LastName + " " + r.User.FirstName).Trim() })
                 .Distinct()
                 .ToListAsync();
 
-            // 5. Сборка результата
             var result = mainData.Select(h => new HakatonListItemDto
             {
                 Id = h.Id,
@@ -86,6 +81,7 @@ namespace HakatonApplication.Service
             }).ToList();
 
             return result;
-        }
+        } 
     }
 }
+  

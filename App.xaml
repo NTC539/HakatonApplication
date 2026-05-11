@@ -3,6 +3,96 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:HakatonApplication">
     <Application.Resources>
-         
+        <ResourceDictionary>
+
+            <!-- Кисти -->
+            <SolidColorBrush x:Key="PrimaryBrush" Color="#2C3E50"/>
+            <SolidColorBrush x:Key="SecondaryBrush" Color="#3498DB"/>
+            <SolidColorBrush x:Key="AccentBrush" Color="#E74C3C"/>
+            <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="TagBackgroundBrush" Color="#ECF0F1"/>
+            <SolidColorBrush x:Key="StatBackgroundBrush" Color="#F8F9FA"/>
+
+            <!-- Стиль для карточки хакатона -->
+            <Style x:Key="HakatonCardStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+                <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+                <Setter Property="Padding" Value="15"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#F5F5F5"/>
+                        <Setter Property="BorderBrush" Value="{StaticResource SecondaryBrush}"/>
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.2"/>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Стиль для тегов -->
+            <Style x:Key="TagStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource TagBackgroundBrush}"/>
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="Padding" Value="8,3"/>
+                <Setter Property="Margin" Value="0,0,8,5"/>
+            </Style>
+            <Style TargetType="TextBlock" x:Key="TagTextStyle">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+            </Style>
+
+            <!-- Стиль для блоков статистики -->
+            <Style x:Key="StatBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource StatBackgroundBrush}"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="8,4"/>
+                <Setter Property="Margin" Value="0,0,10,5"/>
+            </Style>
+
+            <!-- Стиль для текста заголовка -->
+            <Style TargetType="TextBlock" x:Key="HakatonTitleStyle">
+                <Setter Property="FontSize" Value="22"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="Margin" Value="0,0,0,5"/>
+            </Style>
+
+            <!-- Стиль для описания -->
+            <Style TargetType="TextBlock" x:Key="DescriptionStyle">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Foreground" Value="#555"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="Margin" Value="0,0,0,12"/>
+            </Style>
+
+            <!-- Стиль для секций (Спонсоры, Эксперты) -->
+            <Style TargetType="TextBlock" x:Key="SectionHeaderStyle">
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Margin" Value="0,0,0,5"/>
+                <Setter Property="FontSize" Value="13"/>
+            </Style>
+
+            <!-- Глобальный стиль для кнопок поиска -->
+            <Style TargetType="Button">
+                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="Padding" Value="12,6"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#2980B9"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
