@@ -1,58 +1,74 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using HakatonApplication.DTO;
-using HakatonApplication.Models;
+using HakatonApplication.Message;
 using HakatonApplication.Service;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
-namespace HakatonApplication.ViewModel;
-
-public partial class MainWindowViewModel : ObservableObject
+namespace HakatonApplication.ViewModel
 {
-    private readonly IHakatonService _hakatonService;
-
-    public MainWindowViewModel(IHakatonService hakatonService)
+    public partial class MainWindowViewModel : ObservableObject
     {
-        _hakatonService = hakatonService;
-    }
+        private readonly IHakatonService _hakatonService;
 
-    [ObservableProperty]
-    private ObservableCollection<HakatonListItemDto> _hakatons = new();
+        [ObservableProperty]
+        private ObservableCollection<HakatonListItemDto> _hakatons = new();
 
-    [ObservableProperty]
-    private string _searchText = string.Empty;
+        [ObservableProperty]
+        private string _searchText = string.Empty;
 
-    [ObservableProperty]
-    private bool _isLoading;
+        [ObservableProperty]
+        private bool _isLoading;
 
-    [RelayCommand]
-    private async Task LoadHakatonsAsync() => await LoadDataAsync(null);
+        [ObservableProperty]
+        private object? _currentViewModel;  // текущая страница
 
-    [RelayCommand]
-    private async Task SearchAsync() => await LoadDataAsync(SearchText);
-
-    private async Task LoadDataAsync(string? searchText)
-    {
-        if (IsLoading) return;
-        IsLoading = true;
-        try
+        public MainWindowViewModel(IHakatonService hakatonService)
         {
-            var items = await _hakatonService.GetAllHakatonsAsync(searchText);
-            Hakatons = new ObservableCollection<HakatonListItemDto>(items);
+            _hakatonService = hakatonService;
+            CurrentViewModel = this; // стартовая страница – список
+
+            WeakReferenceMessenger.Default.Register<NavigationMessage>(this, OnNavigationMessage);
         }
-        finally
+
+        private void OnNavigationMessage(object recipient, NavigationMessage message)
         {
-            IsLoading = false;
+            if (message.ViewModelType == typeof(HakatonDetailViewModel) && message.Id.HasValue)
+            {
+                var detailVm = new HakatonDetailViewModel(message.Id.Value, _hakatonService);
+                CurrentViewModel = detailVm;
+            }
+            else if (message.ViewModelType == typeof(MainWindowViewModel))
+            {
+                CurrentViewModel = this;
+                _ = LoadHakatonsAsync(); // обновить список при возврате
+            }
         }
-    }
-    [RelayCommand]
-    private async Task OpenHakatonAsync(int id)
-    {
-        //// Открытие окна деталей
-        //var detailViewModel = new HakatonDetailViewModel(id, ...);
-        //var detailWindow = new HakatonDetailView { DataContext = detailViewModel };
-        //detailWindow.ShowDialog();
-        //// Опционально: обновить список
-        //await LoadHakatonsAsync();
+
+        [RelayCommand]
+        private async Task LoadHakatonsAsync() => await LoadDataAsync(null);
+
+        [RelayCommand]
+        private async Task SearchAsync() => await LoadDataAsync(SearchText);
+
+        private async Task LoadDataAsync(string? searchText)
+        {
+            if (IsLoading) return;
+            IsLoading = true;
+            try
+            {
+                var items = await _hakatonService.GetAllHakatonsAsync(searchText);
+                Hakatons = new ObservableCollection<HakatonListItemDto>(items);
+            }
+            finally { IsLoading = false; }
+        }
+
+        [RelayCommand]
+        private void OpenHakaton(int id)
+        {
+            WeakReferenceMessenger.Default.Send(new NavigationMessage(typeof(HakatonDetailViewModel), id));
+        }
     }
 }

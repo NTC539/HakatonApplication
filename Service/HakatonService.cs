@@ -1,5 +1,6 @@
 ﻿using HakatonApplication.Context;
 using HakatonApplication.DTO;
+using HakatonApplication.ViewModel;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace HakatonApplication.Service
     public interface IHakatonService
     {
         Task<List<HakatonListItemDto>> GetAllHakatonsAsync(string? searchText = null);
+        Task<HakatonDetailsDto> GetHakatonDetailsAsync(int id);
     }
 
     public class HakatonService : IHakatonService
@@ -81,7 +83,56 @@ namespace HakatonApplication.Service
             }).ToList();
 
             return result;
-        } 
+        }
+        public async Task<HakatonDetailsDto> GetHakatonDetailsAsync(int id)
+        {
+            var hakaton = await _context.Hakatons
+                .Where(h => h.Id == id)
+                .Select(h => new HakatonDetailsDto
+                {
+                    Id = h.Id,
+                    Name = h.Name ?? "",
+                    Description = h.Description ?? "",
+                    Stages = h.Stages.OrderBy(s => s.OrderNumber).Select(s => new StageViewModel
+                    {
+                        Description = s.Description,
+                        StartDate = s.StartDate,
+                        EndDate = s.EndDate,
+                        Tasks = s.Tasks.Select(t => new TaskViewModel
+                        {
+                            Description = t.Description,
+                            IsSolutionsPublic = t.IsSolutionsPublic == 1,
+                            Criteria = t.TaskCriteria.Select(tc => new CriteriaViewModel
+                            {
+                                Name = tc.Criteria.Name,
+                                Description = tc.Description,
+                                MaxMark = tc.MaxMark
+                            }).ToList()
+                        }).ToList()
+                    }).ToList(),
+                    Teams = h.Teams.Select(t => new TeamViewModel
+                    {
+                        Name = t.Name,
+                        Members = t.Registrations.Select(r => $"{r.User.LastName} {r.User.FirstName}").ToList()
+                    }).ToList(),
+                    SponsorContributions = h.SponsorContributions.Select(sc => new SponsorContributionViewModel
+                    {
+                        SponsorName = sc.Sponsor.Name,
+                        Money = sc.Money,
+                        Description = sc.Description
+                    }).ToList(),
+                    PrizeFunds = h.HakatonNominations.SelectMany(hn => hn.PrizeFunds.Select(pf => new PrizeFundViewModel
+                    {
+                        NominationName = hn.Nomination.Name,
+                        Place = pf.Place,
+                        Amount = pf.Contributions.Sum(c => c.Money),
+                        WinnerTeamName = null  
+                    })).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            return hakaton ?? new HakatonDetailsDto();
+        }
     }
 }
   

@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="HakatonApplication.View.HakatonDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:converter="clr-namespace:HakatonApplication.Converter"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <converter:NullableDateVisibilityConverter x:Key="NullableDateVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <Button Content="← Назад к хакатонам" 
+                    Command="{Binding GoBackCommand}"
+                    Style="{StaticResource BackButtonStyle}"/>
+            <TextBlock Text="{Binding Name}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+            <TextBlock Text="{Binding Description}" FontSize="16" Margin="0,10,0,20"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="Этапы и задания">
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Stages}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="#CCC" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="10">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Description}" FontWeight="Bold"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding StartDate, StringFormat='dd.MM.yyyy'}" Visibility="{Binding StartDate, Converter={StaticResource NullableDateVisibilityConverter}}"/>
+                                            <TextBlock Text=" – " Visibility="{Binding EndDate, Converter={StaticResource NullableDateVisibilityConverter}}"/>
+                                            <TextBlock Text="{Binding EndDate, StringFormat='dd.MM.yyyy'}" Visibility="{Binding EndDate, Converter={StaticResource NullableDateVisibilityConverter}}"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Задания:" FontWeight="SemiBold" Margin="0,10,0,5"/>
+                                        <ItemsControl ItemsSource="{Binding Tasks}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Margin="0,5,0,5" Padding="8">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Description}" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="Критерии оценки:" FontSize="12" Margin="0,5,0,2"/>
+                                                            <ItemsControl ItemsSource="{Binding Criteria}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                                                            <TextBlock Text=": "/>
+                                                                            <TextBlock Text="{Binding Description}"/>
+                                                                            <TextBlock Text=" (макс. "/>
+                                                                            <TextBlock Text="{Binding MaxMark}"/>
+                                                                            <TextBlock Text=")"/>
+                                                                        </StackPanel>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Команды">
+                <DataGrid ItemsSource="{Binding Teams}" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
+                        <DataGridTextColumn Header="Участники" Binding="{Binding MembersString}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem Header="Призы и спонсоры">
+                <DataGrid ItemsSource="{Binding PrizeFunds}" AutoGenerateColumns="True"/>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

@@ -1,159 +1,20 @@
 ﻿<Window x:Class="HakatonApplication.View.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:viewModels="clr-namespace:HakatonApplication.ViewModel"
-        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:view="clr-namespace:HakatonApplication.View"
+        xmlns:viewModel="clr-namespace:HakatonApplication.ViewModel"
         Title="Хакатоны" Height="800" Width="1200"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type viewModel:MainWindowViewModel}">
+            <view:HakatonListView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:HakatonDetailViewModel}">
+            <view:HakatonDetailView/>
+        </DataTemplate>
+    </Window.Resources>
 
-    <Window.InputBindings>
-        <KeyBinding Key="F5" Command="{Binding LoadHakatonsCommand}"/>
-    </Window.InputBindings>
-
-    <Grid Margin="15">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-
-        <!-- Заголовок -->
-        <TextBlock Text="Каталог хакатонов" FontSize="28" FontWeight="Bold" Margin="0,0,0,10"
-                   Foreground="{StaticResource PrimaryBrush}"/>
-
-        <!-- Панель поиска -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
-            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Width="350" Height="32" Margin="0,0,10,0"
-                     Padding="8,5" FontSize="14"
-                     BorderBrush="#CCC" BorderThickness="1"
-                     ToolTip="Введите название или описание"/>
-            <Button Content="Поиск" Command="{Binding SearchCommand}"
-                    Width="90" Height="32" Margin="0,0,10,0"/>
-            <Button Content="Сбросить" Command="{Binding LoadHakatonsCommand}"
-                    Width="90" Height="32"
-                    Background="{StaticResource AccentBrush}"/>
-            <TextBlock Text="{Binding Hakatons.Count, StringFormat='Найдено: {0} хакатонов'}"
-                       VerticalAlignment="Center" Margin="25,0,0,0"
-                       FontSize="14" Foreground="#555"/>
-        </StackPanel>
-
-        <!-- Прогресс загрузки -->
-        <ProgressBar Grid.Row="2" IsIndeterminate="{Binding IsLoading}" Height="4"
-                     VerticalAlignment="Top" Foreground="{StaticResource SecondaryBrush}">
-            <ProgressBar.Style>
-                <Style TargetType="ProgressBar">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsLoading}" Value="True">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ProgressBar.Style>
-        </ProgressBar>
-
-        <!-- Список карточек -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0">
-            <ItemsControl ItemsSource="{Binding Hakatons}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <!-- Кликабельная карточка -->
-                        <Border Style="{StaticResource HakatonCardStyle}">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="MouseLeftButtonUp">
-                                    <i:InvokeCommandAction Command="{Binding DataContext.OpenHakatonCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                   CommandParameter="{Binding Id}"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                            
-                        <StackPanel>
-                                <!-- Название -->
-                                <TextBlock Text="{Binding Name}" Style="{StaticResource HakatonTitleStyle}"/>
-
-                                <!-- Теги -->
-                                <WrapPanel Margin="0,0,0,10">
-                                    <ItemsControl ItemsSource="{Binding Tags}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel/>
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Style="{StaticResource TagStyle}">
-                                                    <TextBlock Text="{Binding}" Style="{StaticResource TagTextStyle}"/>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </WrapPanel>
-
-                                <!-- Описание -->
-                                <TextBlock Text="{Binding Description}" Style="{StaticResource DescriptionStyle}"/>
-
-                                <!-- Даты -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <TextBlock Text="📅 " FontSize="13"/>
-                                    <TextBlock Text="{Binding StartDate, StringFormat='dd.MM.yyyy'}" FontSize="13"/>
-                                    <TextBlock Text=" – " FontSize="13"/>
-                                    <TextBlock Text="{Binding EndDate, StringFormat='dd.MM.yyyy'}" FontSize="13"/>
-                                </StackPanel>
-
-                                <!-- Статистика -->
-                                <WrapPanel Margin="0,0,0,10">
-                                    <Border Style="{StaticResource StatBorderStyle}">
-                                        <TextBlock Text="{Binding TotalTeams, StringFormat='👥 Команд: {0}'}" FontSize="12"/>
-                                    </Border>
-                                    <Border Style="{StaticResource StatBorderStyle}">
-                                        <TextBlock Text="{Binding TotalParticipants, StringFormat='👤 Участников: {0}'}" FontSize="12"/>
-                                    </Border>
-                                    <Border Style="{StaticResource StatBorderStyle}">
-                                        <TextBlock Text="{Binding TotalExperts, StringFormat='🧑‍🏫 Экспертов: {0}'}" FontSize="12"/>
-                                    </Border>
-                                    <Border Style="{StaticResource StatBorderStyle}">
-                                        <TextBlock Text="{Binding TotalPrizeFund, StringFormat='💰 Призовой фонд: {0:N0} ₽'}" FontSize="12"/>
-                                    </Border>
-                                </WrapPanel>
-
-                                <!-- Спонсоры -->
-                                <StackPanel Margin="0,0,0,10">
-                                    <TextBlock Text="Спонсоры:" Style="{StaticResource SectionHeaderStyle}"/>
-                                    <ItemsControl ItemsSource="{Binding Sponsors}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel/>
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding}" Margin="0,0,15,0" FontSize="12" Foreground="#555"/>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-
-                                <!-- Эксперты -->
-                                <StackPanel>
-                                    <TextBlock Text="Эксперты:" Style="{StaticResource SectionHeaderStyle}"/>
-                                    <ItemsControl ItemsSource="{Binding Experts}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel/>
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding}" Margin="0,0,15,0" FontSize="12" Foreground="#555"/>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+    <Grid>
+        <ContentControl Content="{Binding CurrentViewModel}"/>
     </Grid>
 </Window>
