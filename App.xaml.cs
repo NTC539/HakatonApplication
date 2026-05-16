@@ -20,14 +20,26 @@ namespace HakatonApplication
             var services = new ServiceCollection();
             services.AddDbContext<HakatonDbContext>(options =>
                 options.UseNpgsql("Host=localhost;Database=postgres;Username=postgres;Password=1111"));
+            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IHakatonService, HakatonService>();
-            services.AddTransient<MainWindowViewModel>(); // не Singleton
+            services.AddTransient<LoginViewModel>();
+            services.AddTransient<LoginWindow>();
+            services.AddSingleton<MainWindowViewModel>(); 
+            services.AddTransient<MainWindow>();
 
             var provider = services.BuildServiceProvider();
 
-            var viewModel = provider.GetRequiredService<MainWindowViewModel>();
-            var mainWindow = new MainWindow(viewModel);
-            mainWindow.Show();
+            var loginWindow = provider.GetRequiredService<LoginWindow>();
+            bool? result = loginWindow.ShowDialog();
+            if (result == true)
+            {
+                var mainWindow = provider.GetRequiredService<MainWindow>();
+                mainWindow.Show();
+            }
+            else
+            {
+                Shutdown();
+            }
         }
     }
 
