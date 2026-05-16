@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
         <converter:NullableDateVisibilityConverter x:Key="NullableDateVisibilityConverter"/>
+        <converter:EmptyListVisibilityConverter x:Key="EmptyListVisibilityConverter"/>
     </UserControl.Resources>
 
     <Grid Margin="15">
@@ -28,13 +29,13 @@
                             <DataTemplate>
                                 <Border BorderBrush="#CCC" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="10">
                                     <StackPanel>
-                                        <TextBlock Text="{Binding Description}" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding Description}" FontWeight="Bold" TextWrapping="Wrap"/>
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding StartDate, StringFormat='dd.MM.yyyy'}" Visibility="{Binding StartDate, Converter={StaticResource NullableDateVisibilityConverter}}"/>
                                             <TextBlock Text=" – " Visibility="{Binding EndDate, Converter={StaticResource NullableDateVisibilityConverter}}"/>
                                             <TextBlock Text="{Binding EndDate, StringFormat='dd.MM.yyyy'}" Visibility="{Binding EndDate, Converter={StaticResource NullableDateVisibilityConverter}}"/>
                                         </StackPanel>
-                                        <TextBlock Text="Задания:" FontWeight="SemiBold" Margin="0,10,0,5"/>
+                                        <TextBlock Text="Задания:" FontWeight="SemiBold" Margin="0,10,0,5" Visibility="{Binding Tasks, Converter={StaticResource EmptyListVisibilityConverter}}"/>
                                         <ItemsControl ItemsSource="{Binding Tasks}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
