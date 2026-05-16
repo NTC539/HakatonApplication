@@ -29,7 +29,13 @@
                        VerticalAlignment="Center" Margin="25,0,0,0"
                        FontSize="14" Foreground="#555"/>
         </StackPanel>
+        
+        
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
+            <Button Content="+ Создать хакатон" 
+        Command="{Binding CreateHakatonCommand}"
+        Visibility="{Binding IsCurrentUserAdmin, Converter={StaticResource BooleanToVisibilityConverter}}"
+        Background="{StaticResource AccentBrush}" Width="130" Height="30" Margin="10,0"/>
             <Button Content="Войти" Command="{Binding OpenLoginCommand}" 
             Visibility="{Binding IsAuthenticated, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
             Width="80" Height="30" Margin="5,0"/>

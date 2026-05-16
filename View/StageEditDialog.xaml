@@ -1,0 +1,24 @@
+﻿<Window x:Class="HakatonApplication.View.StageEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Редактирование этапа" Height="400" Width="500"
+        WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="10">
+        <TextBlock Text="Описание" FontWeight="Bold"/>
+        <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" AcceptsReturn="True"/>
+        <TextBlock Text="Дата начала" Margin="0,10,0,0"/>
+        <DatePicker SelectedDate="{Binding StartDate}" />
+        <TextBlock Text="Дата окончания (необязательно)" Margin="0,10,0,0"/>
+        <DatePicker SelectedDate="{Binding EndDate}" />
+        <TextBlock Text="Порядковый номер" Margin="0,10,0,0"/>
+        <TextBox Text="{Binding OrderNumber}" InputScope="Number"/>
+        <TextBlock Text="ID места проведения" Margin="0,10,0,0"/>
+        <TextBox Text="{Binding LocationId}" InputScope="Number"/>
+        <TextBlock Text="ID типа этапа" Margin="0,10,0,0"/>
+        <TextBox Text="{Binding StageTypeId}" InputScope="Number"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="OK" Command="{Binding OkCommand}" Width="75" Margin="5"/>
+            <Button Content="Отмена" Command="{Binding CancelCommand}" Width="75" Margin="5"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

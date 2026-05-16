@@ -6,17 +6,19 @@ namespace HakatonApplication.Helper
     public static class PasswordHelper
     {
         public static readonly DependencyProperty PasswordProperty =
-            DependencyProperty.RegisterAttached("Password", typeof(string), typeof(PasswordHelper),
-                new FrameworkPropertyMetadata(string.Empty));
+            DependencyProperty.RegisterAttached(
+                "Password",
+                typeof(string),
+                typeof(PasswordHelper),
+                new FrameworkPropertyMetadata(string.Empty, OnPasswordPropertyChanged));
 
-        public static void SetPassword(DependencyObject obj, string value)
-        {
-            obj.SetValue(PasswordProperty, value);
-        }
+        public static void SetPassword(DependencyObject obj, string value) => obj.SetValue(PasswordProperty, value);
+        public static string GetPassword(DependencyObject obj) => (string)obj.GetValue(PasswordProperty);
 
-        public static string GetPassword(DependencyObject obj)
+        private static void OnPasswordPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            return (string)obj.GetValue(PasswordProperty);
+            if (d is PasswordBox pb && pb.Password != (string)e.NewValue)
+                pb.Password = (string)e.NewValue;
         }
     }
 }

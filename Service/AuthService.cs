@@ -1,5 +1,6 @@
 ﻿using HakatonApplication.Context;
 using HakatonApplication.DTO;
+using HakatonApplication.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -46,21 +47,69 @@ namespace HakatonApplication.Service
 
         public async Task<int?> RegisterAsync(RegisterDto registerDto)
         {
-            // Вызов хранимой функции create_user через raw SQL
-            var sql = "SELECT create_user({0}, {1}, {2}, {3}, {4}, {5})";
-            var parameters = new object[]
+            // Проверка, существует ли email
+            var existingContact = await _context.Contacts.FirstOrDefaultAsync(c => c.Email == registerDto.Email);
+            if (existingContact != null)
+                return null; // email уже используется
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                registerDto.Email,
-                registerDto.Password,
-                registerDto.FirstName,
-                registerDto.LastName,
-                registerDto.Patronymic,
-                string.IsNullOrWhiteSpace(registerDto.Phone) ? DBNull.Value : (object)registerDto.Phone
-            };
-            var result = await _context.Database.SqlQueryRaw<int?>(sql, parameters).FirstOrDefaultAsync();
-            return result;
+                // 1. Добавляем контакт
+                var contact = new Contact
+                {
+                    Email = registerDto.Email,
+                    PhoneNumber = string.IsNullOrWhiteSpace(registerDto.Phone) ? null : registerDto.Phone
+                };
+                _context.Contacts.Add(contact);
+                await _context.SaveChangesAsync();
+
+                // 2. Генерируем соль и хэш пароля
+                var salt = GenerateSalt();
+                var hashedPassword = ComputeSha256Hex(salt + registerDto.Password);
+
+                // 3. Добавляем пользователя
+                var user = new User
+                {
+                    FirstName = registerDto.FirstName,
+                    LastName = registerDto.LastName,
+                    Patronymic = registerDto.Patronymic,
+                    Password = hashedPassword,
+                    Salt = salt,
+                    RegistrationDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified).AddHours(3),
+                    ContactId = contact.Id,
+                    IsPublic = 0,
+                    IsAdmin = 0
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+
+                await transaction.CommitAsync();
+                return user.Id;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
+        private string GenerateSalt()
+        {
+            using var rng = RandomNumberGenerator.Create();
+            var bytes = new byte[8]; // 8 байт = 16 hex символов
+            rng.GetBytes(bytes);
+            return Convert.ToHexString(bytes).ToLower();
+        }
+
+        private string ComputeSha256Hex(string input)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(input);
+            var hash = sha256.ComputeHash(bytes);
+            return Convert.ToHexString(hash).ToLower();
+        }
         public async Task<UserInfoDto> GetUserInfoAsync(int userId)
         {
             var user = await _context.Users
@@ -76,16 +125,10 @@ namespace HakatonApplication.Service
                 Patronymic = user.Patronymic ?? "",
                 Email = user.Contact?.Email ?? "",
                 Phone = user.Contact?.PhoneNumber ?? "",
-                IsPublic = user.IsPublic == 1
+                IsPublic = user.IsPublic == 1,
+                IsAdmin = user.IsAdmin == 1
             };
         }
 
-        private string ComputeSha256Hex(string input)
-        {
-            using var sha256 = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(input);
-            var hash = sha256.ComputeHash(bytes);
-            return BitConverter.ToString(hash).Replace("-", "").ToLower();
-        }
     }
 }

@@ -24,6 +24,9 @@ namespace HakatonApplication
             services.AddTransient<LoginViewModel>();
             services.AddTransient<LoginWindow>();
             services.AddTransient<HakatonDetailViewModel>();
+            services.AddTransient<StageEditDialog>();
+            services.AddTransient<TaskEditDialog>();
+            services.AddTransient<CriteriaEditDialog>();
 
 
             _serviceProvider = services.BuildServiceProvider();

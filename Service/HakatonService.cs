@@ -1,5 +1,6 @@
 ﻿using HakatonApplication.Context;
 using HakatonApplication.DTO;
+using HakatonApplication.Models;
 using HakatonApplication.ViewModel;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -13,6 +14,26 @@ namespace HakatonApplication.Service
     {
         Task<List<HakatonListItemDto>> GetAllHakatonsAsync(string? searchText = null);
         Task<HakatonDetailsDto> GetHakatonDetailsAsync(int id);
+        Task<int> CreateEmptyHakatonAsync(int creatorUserId);
+        Task UpdateHakatonAsync(int id, string name, string description);
+
+        Task<Stage?> GetStageByIdAsync(int id);
+        Task AddStageAsync(Stage stage);
+        Task UpdateStageAsync(Stage stage);
+        Task DeleteStageAsync(int stageId);
+
+        Task<StageTask?> GetTaskByIdAsync(int id);
+        Task AddTaskAsync(StageTask task);
+        Task UpdateTaskAsync(StageTask task);
+        Task DeleteTaskAsync(int taskId);
+
+        Task<TaskCriterion?> GetCriteriaByIdAsync(int id);
+        Task AddCriteriaAsync(TaskCriterion criteria);
+        Task UpdateCriteriaAsync(TaskCriterion criteria);
+        Task DeleteCriteriaAsync(int criteriaId);
+
+        Task<List<Criterion>> GetAllCriteriaAsync();
+
     }
 
     public class HakatonService : IHakatonService
@@ -124,15 +145,21 @@ namespace HakatonApplication.Service
                     Description = h.Description ?? "",
                     Stages = h.Stages.OrderBy(s => s.OrderNumber).Select(s => new StageViewModel
                     {
+                        Id = s.Id,                      
                         Description = s.Description,
                         StartDate = s.StartDate,
                         EndDate = s.EndDate,
+                        OrderNumber = s.OrderNumber,
+                        LocationId = s.LocationId,
+                        StageTypeId = s.StageTypeId,
                         Tasks = s.Tasks.Select(t => new TaskViewModel
                         {
+                            Id = t.Id,
                             Description = t.Description,
                             IsSolutionsPublic = t.IsSolutionsPublic == 1,
                             Criteria = t.TaskCriteria.Select(tc => new CriteriaViewModel
                             {
+                                Id = tc.Id,                
                                 Name = tc.Criteria.Name,
                                 Description = tc.Description,
                                 MaxMark = tc.MaxMark
@@ -141,26 +168,184 @@ namespace HakatonApplication.Service
                     }).ToList(),
                     Teams = h.Teams.Select(t => new TeamViewModel
                     {
+                        Id = t.Id,
                         Name = t.Name,
                         Members = t.Registrations.Select(r => $"{r.User.LastName} {r.User.FirstName}").ToList()
                     }).ToList(),
                     SponsorContributions = h.SponsorContributions.Select(sc => new SponsorContributionViewModel
                     {
+                        Id = sc.Id,
                         SponsorName = sc.Sponsor.Name,
                         Money = sc.Money,
                         Description = sc.Description
                     }).ToList(),
                     PrizeFunds = h.HakatonNominations.SelectMany(hn => hn.PrizeFunds.Select(pf => new PrizeFundViewModel
                     {
+                        Id = pf.Id,
                         NominationName = hn.Nomination.Name,
                         Place = pf.Place,
                         Amount = pf.Contributions.Sum(c => c.Money),
-                        WinnerTeamName = null  
-                    })).ToList()
+                        WinnerTeamName = null
+                    })).ToList(),
+                    CurrentUserRoleId = _context.HakatonRegistrations
+                        .Where(r => r.HakatonId == id && r.UserId == AppState.CurrentUserId)
+                        .Select(r => r.RoleId ?? 0)
+                        .FirstOrDefault()
                 })
                 .FirstOrDefaultAsync();
 
             return hakaton ?? new HakatonDetailsDto();
+        }
+
+        public async Task<int> CreateEmptyHakatonAsync(int creatorUserId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var hakaton = new Hakaton
+                {
+                    Name = "Новый хакатон",
+                    Description = ""
+                };
+                _context.Hakatons.Add(hakaton);
+                await _context.SaveChangesAsync();
+
+                var registration = new HakatonRegistration
+                {
+                    HakatonId = hakaton.Id,
+                    UserId = creatorUserId,
+                    RoleId = 3, 
+                    RegistrationDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified).AddHours(3)
+                };
+                _context.HakatonRegistrations.Add(registration);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return hakaton.Id;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<Stage?> GetStageByIdAsync(int id)
+        {
+            return await _context.Stages.FindAsync(id);
+        }
+
+        public async Task<StageTask?> GetTaskByIdAsync(int id)
+        {
+            return await _context.Tasks.FindAsync(id);
+        }
+
+        public async Task<TaskCriterion?> GetCriteriaByIdAsync(int id)
+        {
+            return await _context.TaskCriteria.FindAsync(id);
+        }
+
+        public async Task UpdateHakatonAsync(int id, string name, string description)
+        {
+            var hakaton = await _context.Hakatons.FindAsync(id);
+            if (hakaton != null)
+            {
+                hakaton.Name = name;
+                hakaton.Description = description;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task AddStageAsync(Stage stage)
+        {
+            _context.Stages.Add(stage);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateStageAsync(Stage stage)
+        {
+            var existing = await _context.Stages.FindAsync(stage.Id);
+            if (existing != null)
+            {
+                existing.Description = stage.Description;
+                existing.StartDate = stage.StartDate;
+                existing.EndDate = stage.EndDate;
+                existing.OrderNumber = stage.OrderNumber;
+                existing.LocationId = stage.LocationId;
+                existing.StageTypeId = stage.StageTypeId;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteStageAsync(int stageId)
+        {
+            var stage = await _context.Stages.FindAsync(stageId);
+            if (stage != null)
+            {
+                _context.Stages.Remove(stage);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // Task (задания)
+        public async Task AddTaskAsync(StageTask task)
+        {
+            _context.Tasks.Add(task);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateTaskAsync(StageTask task)
+        {
+            var existing = await _context.Tasks.FindAsync(task.Id);
+            if (existing != null)
+            {
+                existing.Description = task.Description;
+                existing.IsSolutionsPublic = task.IsSolutionsPublic;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteTaskAsync(int taskId)
+        {
+            var task = await _context.Tasks.FindAsync(taskId);
+            if (task != null)
+            {
+                _context.Tasks.Remove(task);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // Criteria
+        public async Task AddCriteriaAsync(TaskCriterion criteria)
+        {
+            _context.TaskCriteria.Add(criteria);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateCriteriaAsync(TaskCriterion criteria)
+        {
+            var existing = await _context.TaskCriteria.FindAsync(criteria.Id);
+            if (existing != null)
+            {
+                existing.Description = criteria.Description;
+                existing.MaxMark = criteria.MaxMark;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteCriteriaAsync(int criteriaId)
+        {
+            var criteria = await _context.TaskCriteria.FindAsync(criteriaId);
+            if (criteria != null)
+            {
+                _context.TaskCriteria.Remove(criteria);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<List<Criterion>> GetAllCriteriaAsync()
+        {
+            return await _context.Criteria.ToListAsync();
         }
     }
 }

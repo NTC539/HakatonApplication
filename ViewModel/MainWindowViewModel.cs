@@ -24,6 +24,7 @@ namespace HakatonApplication.ViewModel
         [ObservableProperty] private string _searchText = string.Empty;
         [ObservableProperty] private bool _isLoading;
         [ObservableProperty] private object? _currentViewModel;
+        [ObservableProperty] private bool _isCurrentUserAdmin;
 
         // Информация о текущем пользователе
         [ObservableProperty] private bool _isAuthenticated;
@@ -92,7 +93,9 @@ namespace HakatonApplication.ViewModel
         {
             IsAuthenticated = true;
             UserName = $"{message.FirstName} {message.LastName}".Trim();
-            // При желании можно обновить список хакатонов (если нужны персонализированные данные)
+            IsCurrentUserAdmin = message.IsAdmin;
+            AppState.CurrentUserId = message.UserId;
+            _ = LoadHakatonsAsync(); // перезагрузить список (чтобы обновить роль пользователя в карточках)
         }
 
         private void OnNavigationMessage(object recipient, NavigationMessage message)
@@ -124,6 +127,21 @@ namespace HakatonApplication.ViewModel
             //    }
             //}
             // Аналогично для эксперта
+        }
+
+        [RelayCommand]
+        private async Task CreateHakatonAsync()
+        {
+            if (AppState.CurrentUserId == 0)
+            {
+                MessageBox.Show("Необходимо войти для создания хакатона.");
+                OpenLogin();
+                return;
+            }
+            var newId = await _hakatonService.CreateEmptyHakatonAsync(AppState.CurrentUserId);
+            var detailVm = _serviceProvider.GetRequiredService<HakatonDetailViewModel>();
+            detailVm.HakatonId = newId;
+            CurrentViewModel = detailVm;
         }
     }
 }

@@ -48,7 +48,7 @@
                 <TextBlock Text="Email" Margin="0,0,0,5"/>
                 <TextBox Text="{Binding Email}" Margin="0,0,0,10"/>
                 <TextBlock Text="Пароль" Margin="0,0,0,5"/>
-                <PasswordBox helpers:PasswordHelper.Password="{Binding Password, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,20"/>
+                <PasswordBox helpers:PasswordHelper.Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <Button Content="Войти" Command="{Binding LoginCommand}" Height="35"/>
             </StackPanel>
 
@@ -65,9 +65,10 @@
                 <TextBlock Text="Телефон (необязательно)" Margin="0,0,0,5"/>
                 <TextBox Text="{Binding RegPhone}" Margin="0,0,0,0"/>
                 <TextBlock Text="Пароль" Margin="0,0,0,5"/>
-                <PasswordBox helpers:PasswordHelper.Password="{Binding RegPassword, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,0"/>
+                <PasswordBox helpers:PasswordHelper.Password="{Binding RegPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
                 <TextBlock Text="Повторите пароль" Margin="0,0,0,5"/>
-                <PasswordBox helpers:PasswordHelper.Password="{Binding RegConfirmPassword, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                <PasswordBox helpers:PasswordHelper.Password="{Binding RegConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
                 <Button Content="Зарегистрироваться" Command="{Binding RegisterCommand}" Height="35"/>
             </StackPanel>
 

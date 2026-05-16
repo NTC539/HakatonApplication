@@ -677,6 +677,7 @@ public partial class HakatonDbContext : DbContext
                 .HasMaxLength(45)
                 .HasColumnName("first_name");
             entity.Property(e => e.IsPublic).HasColumnName("is_public");
+            entity.Property(e => e.IsAdmin).HasColumnName("is_admin");
             entity.Property(e => e.LastName)
                 .HasMaxLength(45)
                 .HasColumnName("last_name");

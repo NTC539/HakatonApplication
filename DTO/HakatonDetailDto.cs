@@ -16,5 +16,7 @@ namespace HakatonApplication.DTO
         public List<TeamViewModel> Teams { get; set; } = new();
         public List<SponsorContributionViewModel> SponsorContributions { get; set; } = new();
         public List<PrizeFundViewModel> PrizeFunds { get; set; } = new();
+
+        public int CurrentUserRoleId { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using HakatonApplication.Message;
 using HakatonApplication.Service;
+using HakatonApplication.View;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,10 +72,11 @@ namespace HakatonApplication.ViewModel
                     {
                         UserId = userId.Value,
                         FirstName = userInfo.FirstName,
-                        LastName = userInfo.LastName
+                        LastName = userInfo.LastName,
+                        IsAdmin = userInfo.IsAdmin
                     });
                     // Закрыть окно логина
-                    if (Application.Current.Windows[0] is Window loginWindow)
+                    if (Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault() is Window loginWindow)
                         loginWindow.Close();
                     return;
                 }
@@ -120,7 +122,18 @@ namespace HakatonApplication.ViewModel
                     if (loginResult.HasValue)
                     {
                         AppState.CurrentUserId = loginResult.Value;
-                        LoginSucceeded?.Invoke();
+                        var userInfo = await _authService.GetUserInfoAsync(loginResult.Value);
+                        WeakReferenceMessenger.Default.Send(new LoginSuccessMessage
+                        {
+                            UserId = loginResult.Value,
+                            FirstName = userInfo.FirstName,
+                            LastName = userInfo.LastName,
+                            IsAdmin = userInfo.IsAdmin
+                        });
+                        // Закрыть окно логина
+                        if (Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault() is Window loginWindow)
+                            loginWindow.Close();
+                        return;
                     }
                 }
                 else

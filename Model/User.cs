@@ -18,6 +18,7 @@ public partial class User
     public DateTime? RegistrationDate { get; set; }
 
     public short? IsPublic { get; set; }
+    public short? IsAdmin { get; set; }
 
     public string? Password { get; set; }
 
