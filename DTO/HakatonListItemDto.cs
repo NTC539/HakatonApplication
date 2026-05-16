@@ -19,6 +19,8 @@ namespace HakatonApplication.DTO
         public decimal TotalPrizeFund { get; set; }
         public List<string> Tags { get; set; } = new();
         public List<string> Sponsors { get; set; } = new();
-        public List<string> Experts { get; set; } = new(); 
+        public List<string> Experts { get; set; } = new();
+        public int CurrentUserRoleId { get; set; } = 0;
+        public string CurrentUserRoleName { get; set; } = "Не зарегистрирован";
     }
 }

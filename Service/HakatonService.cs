@@ -66,6 +66,30 @@ namespace HakatonApplication.Service
                 .Distinct()
                 .ToListAsync();
 
+            int currentUserId = AppState.CurrentUserId;
+            Dictionary<int, int> userRoles = new Dictionary<int, int>();
+            if (currentUserId > 0)
+            {
+                var registrations = await _context.HakatonRegistrations
+                    .Where(r => ids.Contains(r.HakatonId) && r.UserId == currentUserId)
+                    .Select(r => new { r.HakatonId, r.RoleId })
+                    .ToListAsync();
+                userRoles = registrations
+                    .Where(r => r.RoleId.HasValue)
+                    .ToDictionary(r => r.HakatonId, r => r.RoleId.Value);
+            }
+
+            Dictionary<int, string> roleNames = new Dictionary<int, string>();
+            if (userRoles.Values.Any())
+            {
+                var distinctRoleIds = userRoles.Values.Distinct();
+                var roles = await _context.Roles
+                    .Where(r => distinctRoleIds.Contains(r.Id))
+                    .Select(r => new { r.Id, r.Name })
+                    .ToListAsync();
+                roleNames = roles.ToDictionary(r => r.Id, r => r.Name ?? "");
+            }
+
             var result = mainData.Select(h => new HakatonListItemDto
             {
                 Id = h.Id,
@@ -79,7 +103,12 @@ namespace HakatonApplication.Service
                 TotalPrizeFund = h.TotalPrizeFund ?? 0,
                 Tags = tags.Where(t => t.HakatonId == h.Id).Select(t => t.Tag).ToList(),
                 Sponsors = sponsors.Where(s => s.HakatonId == h.Id).Select(s => s.SponsorName).Distinct().ToList(),
-                Experts = experts.Where(e => e.HakatonId == h.Id).Select(e => e.ExpertName).Distinct().ToList()
+                Experts = experts.Where(e => e.HakatonId == h.Id).Select(e => e.ExpertName).Distinct().ToList(),
+                CurrentUserRoleId = userRoles.ContainsKey(h.Id) ? userRoles[h.Id] : 0,
+                CurrentUserRoleName = userRoles.ContainsKey(h.Id) && roleNames.ContainsKey(userRoles[h.Id])
+                    ? roleNames[userRoles[h.Id]]
+                    : "Не зарегистрирован"
+
             }).ToList();
 
             return result;

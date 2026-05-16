@@ -15,7 +15,9 @@ namespace HakatonApplication.ViewModel
     public partial class HakatonDetailViewModel : ViewModelBase
     {
         private readonly IHakatonService _hakatonService;
-        private readonly int _hakatonId;
+
+        [ObservableProperty]
+        private int _hakatonId;
 
         [ObservableProperty]
         private string _name = string.Empty;
@@ -46,24 +48,27 @@ namespace HakatonApplication.ViewModel
             WeakReferenceMessenger.Default.Send(new NavigationMessage(typeof(MainWindowViewModel)));
         }
 
-        public HakatonDetailViewModel(int hakatonId, IHakatonService hakatonService)
+        public HakatonDetailViewModel(IHakatonService hakatonService)
         {
-            _hakatonId = hakatonId;
             _hakatonService = hakatonService;
             LoadDetailsCommand = new AsyncRelayCommand(LoadDetailsAsync);
-            _ = LoadDetailsAsync(); // запуск асинхронной загрузки
+        }
+
+        partial void OnHakatonIdChanged(int value)
+        {
+            if (value > 0)
+                _ = LoadDetailsAsync();
         }
 
         private async Task LoadDetailsAsync()
         {
-            if (IsLoading) return;
+            if (IsLoading || HakatonId <= 0) return;
             IsLoading = true;
             try
             {
-                var details = await _hakatonService.GetHakatonDetailsAsync(_hakatonId);
+                var details = await _hakatonService.GetHakatonDetailsAsync(HakatonId);
                 Name = details.Name;
                 Description = details.Description;
-
                 Stages = new ObservableCollection<StageViewModel>(details.Stages);
                 Teams = new ObservableCollection<TeamViewModel>(details.Teams);
                 SponsorContributions = new ObservableCollection<SponsorContributionViewModel>(details.SponsorContributions);
@@ -73,8 +78,8 @@ namespace HakatonApplication.ViewModel
             {
                 IsLoading = false;
             }
-
         }
+
     }
 
     // Вспомогальные ViewModel для вложенных данных

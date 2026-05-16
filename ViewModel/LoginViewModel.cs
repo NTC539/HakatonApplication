@@ -1,11 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using HakatonApplication.Message;
 using HakatonApplication.Service;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace HakatonApplication.ViewModel
 
@@ -63,7 +66,17 @@ namespace HakatonApplication.ViewModel
                 if (userId.HasValue)
                 {
                     AppState.CurrentUserId = userId.Value;
-                    LoginSucceeded?.Invoke();  // Успешный вход – закрываем окно
+                    var userInfo = await _authService.GetUserInfoAsync(userId.Value);
+                    WeakReferenceMessenger.Default.Send(new LoginSuccessMessage
+                    {
+                        UserId = userId.Value,
+                        FirstName = userInfo.FirstName,
+                        LastName = userInfo.LastName
+                    });
+                    // Закрыть окно логина
+                    if (Application.Current.Windows[0] is Window loginWindow)
+                        loginWindow.Close();
+                    return;
                 }
                 else
                 {
@@ -120,10 +133,5 @@ namespace HakatonApplication.ViewModel
                 IsLoading = false;
             }
         }
-    }
-
-    public static class AppState
-    {
-        public static int CurrentUserId { get; set; }
     }
 }

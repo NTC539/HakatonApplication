@@ -24,11 +24,6 @@ namespace HakatonApplication.View
         {
             InitializeComponent();
             DataContext = viewModel;
-            viewModel.LoginSucceeded += () =>
-            {
-                DialogResult = true;  
-                Close();
-            };
         }
     }
 }

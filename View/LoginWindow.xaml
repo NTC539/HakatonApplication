@@ -1,12 +1,12 @@
 ﻿<Window x:Class="HakatonApplication.View.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:converters="clr-namespace:HakatonApplication.Converter"
+        xmlns:converter="clr-namespace:HakatonApplication.Converter"
         xmlns:helpers="clr-namespace:HakatonApplication.Helper"
         Title="Хакатон – вход" Height="550" Width="400"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
-        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <converter:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style TargetType="TextBlock" x:Key="ErrorStyle">
             <Setter Property="Foreground" Value="Red"/>
@@ -43,11 +43,12 @@
             </StackPanel>
 
             <!-- Режим входа -->
+            <!-- Режим входа -->
             <StackPanel Visibility="{Binding IsRegisterMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                 <TextBlock Text="Email" Margin="0,0,0,5"/>
                 <TextBox Text="{Binding Email}" Margin="0,0,0,10"/>
                 <TextBlock Text="Пароль" Margin="0,0,0,5"/>
-                <PasswordBox helpers:PasswordHelper.Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,20"/>
+                <PasswordBox helpers:PasswordHelper.Password="{Binding Password, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,20"/>
                 <Button Content="Войти" Command="{Binding LoginCommand}" Height="35"/>
             </StackPanel>
 
@@ -64,9 +65,9 @@
                 <TextBlock Text="Телефон (необязательно)" Margin="0,0,0,5"/>
                 <TextBox Text="{Binding RegPhone}" Margin="0,0,0,0"/>
                 <TextBlock Text="Пароль" Margin="0,0,0,5"/>
-                <PasswordBox helpers:PasswordHelper.Password="{Binding RegPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,0"/>
+                <PasswordBox helpers:PasswordHelper.Password="{Binding RegPassword, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,0"/>
                 <TextBlock Text="Повторите пароль" Margin="0,0,0,5"/>
-                <PasswordBox helpers:PasswordHelper.Password="{Binding RegConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                <PasswordBox helpers:PasswordHelper.Password="{Binding RegConfirmPassword, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
                 <Button Content="Зарегистрироваться" Command="{Binding RegisterCommand}" Height="35"/>
             </StackPanel>
 

@@ -1,5 +1,6 @@
 ﻿<Window x:Class="HakatonApplication.View.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:converters="clr-namespace:HakatonApplication.Converter"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:view="clr-namespace:HakatonApplication.View"
         xmlns:viewModel="clr-namespace:HakatonApplication.ViewModel"
