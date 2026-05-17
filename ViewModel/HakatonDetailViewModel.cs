@@ -82,6 +82,8 @@ namespace HakatonApplication.ViewModel
         [ObservableProperty] private bool _isMemberOfSelectedTeam; 
         [ObservableProperty] private bool _canAddUsersToTeam;
 
+        private int _selectedTeamIdToRestore;
+
         public IAsyncRelayCommand CreateTeamCommand { get; }
         public IAsyncRelayCommand DeleteTeamCommand { get; }
         public IAsyncRelayCommand AddUserToTeamCommand { get; }
@@ -162,6 +164,11 @@ namespace HakatonApplication.ViewModel
                 }
                 if (SelectedTeam != null)
                     OnSelectedTeamChanged(null, SelectedTeam);
+                if (_selectedTeamIdToRestore != 0)
+                {
+                    SelectedTeam = Teams.FirstOrDefault(t => t.Id == _selectedTeamIdToRestore);
+                    _selectedTeamIdToRestore = 0;
+                }
             }
             finally
             {
@@ -291,13 +298,18 @@ namespace HakatonApplication.ViewModel
         {
             if (AppState.CurrentUserId == 0)
             {
-                // Можно открыть окно логина через сообщение
                 WeakReferenceMessenger.Default.Send(new OpenLoginMessage());
                 return;
             }
             await _hakatonService.RegisterUserOnHakatonAsync(HakatonId, AppState.CurrentUserId, 1);
             RegistrationMessage = "Вы успешно зарегистрированы на хакатон!";
-            await LoadDetailsAsync(); // обновить страницу – должен измениться CurrentUserRoleId
+            await LoadDetailsAsync(); 
+            if (!IsOrganizer && AppState.CurrentUserId > 0)
+            {
+                bool hasTeam = await _hakatonService.UserHasTeamOnHakatonAsync(HakatonId, AppState.CurrentUserId);
+                if (hasTeam)
+                    await LoadAvailableParticipantsAsync();
+            }
         }
 
         private async Task AddUserToHakatonAsync()
@@ -309,8 +321,11 @@ namespace HakatonApplication.ViewModel
 
             await _hakatonService.RegisterUserOnHakatonAsync(HakatonId, user.Id, role.Id);
 
-            // Обновить список доступных пользователей (это сбросит SelectedUser и SelectedRole)
             await LoadAvailableUsersAsync();
+            if (IsOrganizer || (AppState.CurrentUserId > 0 && await _hakatonService.UserHasTeamOnHakatonAsync(HakatonId, AppState.CurrentUserId)))
+            {
+                await LoadAvailableParticipantsAsync();
+            }
 
             RegistrationMessage = $"Пользователь {user.FullName} добавлен с ролью {role.Name}";
         }
@@ -339,22 +354,11 @@ namespace HakatonApplication.ViewModel
             NewTeamName = "";
         }
 
-        private async Task DeleteTeamAsync()
-        {
-            if (SelectedTeam == null) return;
-            if (MessageBox.Show($"Удалить команду \"{SelectedTeam.Name}\"?", "Подтверждение", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {
-                await _hakatonService.DeleteTeamAsync(SelectedTeam.Id);
-                await LoadDetailsAsync();
-                SelectedTeam = null;
-            }
-        }
-
         private async Task AddUserToTeamAsync()
         {
             if (SelectedTeam == null || SelectedUserForTeam == null) return;
             await _hakatonService.AddUserToTeamAsync(SelectedUserForTeam.Id, SelectedTeam.Id);
-            await LoadDetailsAsync();
+            await RefreshAfterTeamChange();
             await LoadAvailableParticipantsAsync();
             SelectedUserForTeam = null;
         }
@@ -363,13 +367,22 @@ namespace HakatonApplication.ViewModel
         {
             if (SelectedTeam == null) return;
             await _hakatonService.RemoveUserFromTeamAsync(user.Id, SelectedTeam.Id);
-            await LoadDetailsAsync();
+            await RefreshAfterTeamChange();
             await LoadAvailableParticipantsAsync();
+        }
+
+        private async Task DeleteTeamAsync()
+        {
+            if (SelectedTeam == null) return;
+            if (MessageBox.Show($"Удалить команду \"{SelectedTeam.Name}\"?", "Подтверждение", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                await _hakatonService.DeleteTeamAsync(SelectedTeam.Id);
+                await RefreshAfterTeamChange();
+            }
         }
 
         private async Task LoadAvailableParticipantsAsync()
         {
-            if (!IsOrganizer) return;
             var users = await _hakatonService.GetAvailableUsersForTeamAsync(HakatonId);
             AvailableParticipants = new ObservableCollection<UserDto>(users);
         }
@@ -390,9 +403,15 @@ namespace HakatonApplication.ViewModel
                 _ = LoadAvailableParticipantsAsync();
             }
         }
-    }
 
-    // Вспомогательные ViewModel (без изменений, но для полноты оставлены)
+        private async Task RefreshAfterTeamChange()
+        {
+            int? currentTeamId = SelectedTeam?.Id;
+            await LoadDetailsAsync();
+            if (currentTeamId.HasValue)
+                SelectedTeam = Teams.FirstOrDefault(t => t.Id == currentTeamId.Value);
+        }
+    }
     public partial class StageViewModel : ObservableObject
     {
         [ObservableProperty] private int _id;
