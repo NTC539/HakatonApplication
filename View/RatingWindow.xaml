@@ -1,0 +1,43 @@
+﻿<Window x:Class="HakatonApplication.View.RatingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Оценка решений" Height="600" Width="650"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Выберите команду:"/>
+        <ComboBox Grid.Row="1" ItemsSource="{Binding Teams}" DisplayMemberPath="TeamName"
+                  SelectedItem="{Binding SelectedTeam}" Margin="0,5,0,10"/>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Criteria}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="#CCC" BorderThickness="1" Margin="0,5" Padding="8">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                <Slider Minimum="0" Maximum="{Binding MaxMark}" Value="{Binding Mark}"
+                                        TickFrequency="0.5" IsSnapToTickEnabled="True" TickPlacement="BottomRight"
+                                        Margin="0,5"/>
+                                <TextBlock Text="{Binding Mark, StringFormat='Оценка: {0:F1}'}" Margin="0,2,0,5"/>
+                                <TextBlock Text="Комментарий"/>
+                                <TextBox Text="{Binding Comment}" TextWrapping="Wrap" Height="50" Margin="0,2,0,5"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="Сохранить" Command="{Binding SaveCommand}" Width="100" Margin="5"/>
+            <Button Content="Отмена" Command="{Binding CancelCommand}" Width="100"/>
+        </StackPanel>
+    </Grid>
+</Window>

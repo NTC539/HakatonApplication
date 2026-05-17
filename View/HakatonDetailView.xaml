@@ -102,6 +102,11 @@
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
                                                                 </ItemsControl>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                                                    <Button Content="Решения" Command="{Binding DataContext.OpenSolutionsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                                                    <Button Content="Оценки" Command="{Binding DataContext.OpenMarksViewCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                                                    <Button Content="Оценить" Command="{Binding DataContext.OpenRatingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Visibility="{Binding DataContext.CanEvaluate, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                </StackPanel>
                                                             </StackPanel>
                                                         </Border>
                                                     </DataTemplate>

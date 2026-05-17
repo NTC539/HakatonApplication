@@ -49,6 +49,23 @@ namespace HakatonApplication.Service
 
         Task<HakatonRegistration?> GetUserRegistrationOnHakatonAsync(int hakatonId, int userId);
         Task<bool> UserHasTeamOnHakatonAsync(int hakatonId, int userId);
+
+        Task<List<SolutionDto>> GetSolutionsForTaskAsync(int taskId, int currentUserId, bool isOrganizerOrExpert);
+        Task<int> AddOrUpdateSolutionAsync(SolutionEditDto dto);
+        Task<SolutionEditDto?> GetSolutionForEditAsync(int solutionId, int userId);
+        Task<bool> HasUserSolutionForTaskAsync(int taskId, int teamId);
+
+        Task<List<CriteriaMarkDto>> GetCriteriaForTaskAsync(int taskId);
+        Task<List<TeamForRatingDto>> GetTeamsWithSolutionForTaskAsync(int taskId);
+        Task<List<CriteriaMarkDto>> GetMarksForTeamAndTaskAsync(int teamId, int taskId, int expertRegistrationId);
+        Task SaveMarksAsync(int taskId, int teamId, int expertRegistrationId, List<CriteriaMarkDto> marks);
+
+        Task<int?> GetUserRoleOnHakatonAsync(int hakatonId, int userId);
+        Task<int?> GetUserTeamIdOnHakatonByTaskAsync(int taskId, int currentUserId);
+        Task<int> GetUserRoleOnHakatonByTaskAsync(int taskId, int currentUserId);
+
+        Task<List<CriteriaMarkDto>> GetDetailedMarksForTeamTaskAsync(int teamId, int taskId);
+        Task<decimal?> GetAverageScoreForTeamTaskAsync(int teamId, int taskId);
     }
 
     public class HakatonService : IHakatonService
@@ -509,6 +526,219 @@ namespace HakatonApplication.Service
                 .Where(t => t.HakatonId == hakatonId)
                 .AnyAsync(t => t.Registrations.Any(r => r.Id == registration.Id));
         }
+        public async Task<List<SolutionDto>> GetSolutionsForTaskAsync(int taskId, int currentUserId, bool isOrganizerOrExpert)
+        {
+            var query = _context.Solutions
+                .Include(s => s.Team)
+                .Where(s => s.Tasks.Any(t => t.Id == taskId));
+
+            if (!isOrganizerOrExpert)
+            {
+                // Находим команду текущего пользователя для данного задания
+                var userTeamId = await _context.Teams
+                    .Where(t => t.Hakaton.Stages.Any(s => s.Tasks.Any(t2 => t2.Id == taskId))
+                                && t.Registrations.Any(r => r.UserId == currentUserId))
+                    .Select(t => t.Id)
+                    .FirstOrDefaultAsync();
+
+                if (userTeamId != 0)
+                    query = query.Where(s => s.TeamId == userTeamId);
+                else
+                    return new List<SolutionDto>();
+            }
+
+            return await query.Select(s => new SolutionDto
+            {
+                Id = s.Id,
+                Name = s.Name ?? "",
+                Description = s.Description ?? "",
+                DeliveryDate = s.DeliveryDate ?? DateTime.MinValue,
+                Source = s.Source ?? "",
+                TeamName = s.Team.Name ?? "",
+                TeamId = s.TeamId
+            }).ToListAsync();
+        }
+
+        public async Task<int> AddOrUpdateSolutionAsync(SolutionEditDto dto)
+        {
+            if (dto.Id == 0)
+            {
+                var solution = new Solution
+                {
+                    TeamId = dto.TeamId,
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    DeliveryDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    Source = dto.Source
+                };
+                _context.Solutions.Add(solution);
+                // Добавляем связь с заданием через навигационную коллекцию
+                var task = await _context.Tasks.FindAsync(dto.TaskId);
+                if (task == null) throw new InvalidOperationException($"Task with id {dto.TaskId} not found");
+                solution.Tasks.Add(task);
+                await _context.SaveChangesAsync();
+                return solution.Id;
+            }
+            else
+            {
+                var solution = await _context.Solutions.FindAsync(dto.Id);
+                if (solution == null) return 0;
+                solution.Name = dto.Name;
+                solution.Description = dto.Description;
+                solution.Source = dto.Source;
+                await _context.SaveChangesAsync();
+                return solution.Id;
+            }
+        
+        }
+
+        public async Task<SolutionEditDto?> GetSolutionForEditAsync(int solutionId, int userId)
+        {
+            var solution = await _context.Solutions
+                .Include(s => s.Tasks)
+                .FirstOrDefaultAsync(s => s.Id == solutionId && s.Team.Registrations.Any(r => r.UserId == userId));
+            if (solution == null) return null;
+            return new SolutionEditDto
+            {
+                Id = solution.Id,
+                TeamId = solution.TeamId,
+                Name = solution.Name ?? "",
+                Description = solution.Description ?? "",
+                Source = solution.Source ?? "",
+                TaskId = solution.Tasks.First().Id
+            };
+        }
+
+        public async Task<List<CriteriaMarkDto>> GetCriteriaForTaskAsync(int taskId)
+        {
+            return await _context.TaskCriteria
+                .Where(tc => tc.TaskId == taskId)
+                .Select(tc => new CriteriaMarkDto
+                {
+                    CriteriaId = tc.Id,
+                    Name = tc.Criteria.Name,
+                    MaxMark = tc.MaxMark ?? 0,
+                    Mark = 0
+                }).ToListAsync();
+        }
+
+        public async Task SaveMarksAsync(int taskId, int teamId, int expertRegistrationId, List<CriteriaMarkDto> marks)
+        {
+            foreach (var mark in marks)
+            {
+                var existing = await _context.Marks
+                    .FirstOrDefaultAsync(m => m.TaskCriteriaId == mark.CriteriaId && m.TeamId == teamId && m.RegistrationId == expertRegistrationId);
+                if (existing != null)
+                {
+                    existing.Mark1 = mark.Mark;
+                    existing.Description = mark.Comment;
+                }
+                else
+                {
+                    _context.Marks.Add(new Mark
+                    {
+                        TaskCriteriaId = mark.CriteriaId,
+                        TeamId = teamId,
+                        RegistrationId = expertRegistrationId,
+                        Mark1 = mark.Mark,
+                        Description = mark.Comment
+                    });
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> HasUserSolutionForTaskAsync(int taskId, int teamId)
+        {
+            return await _context.Solutions
+                .AnyAsync(s => s.TeamId == teamId && s.Tasks.Any(t => t.Id == taskId));
+        }
+
+        public async Task<int?> GetUserRoleOnHakatonAsync(int hakatonId, int userId)
+        {
+            return await _context.HakatonRegistrations
+                .Where(r => r.HakatonId == hakatonId && r.UserId == userId)
+                .Select(r => r.RoleId)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<int?> GetUserTeamIdOnHakatonByTaskAsync(int taskId, int userId)
+        {
+            var hakatonId = await _context.Tasks
+                .Where(t => t.Id == taskId)
+                .Select(t => t.Stage.HakatonId)
+                .FirstOrDefaultAsync();
+            if (hakatonId == 0) return null;
+            var registration = await GetUserRegistrationOnHakatonAsync(hakatonId, userId);
+            if (registration == null) return null;
+            var team = await _context.Teams
+                .Where(t => t.HakatonId == hakatonId && t.Registrations.Any(r => r.Id == registration.Id))
+                .FirstOrDefaultAsync();
+            return team?.Id;
+        }
+        public async Task<List<TeamForRatingDto>> GetTeamsWithSolutionForTaskAsync(int taskId)
+        {
+            return await _context.Solutions
+                .Where(s => s.Tasks.Any(t => t.Id == taskId))
+                .Select(s => new TeamForRatingDto
+                {
+                    TeamId = s.TeamId,
+                    TeamName = s.Team.Name ?? ""
+                })
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<List<CriteriaMarkDto>> GetMarksForTeamAndTaskAsync(int teamId, int taskId, int expertRegistrationId)
+        {
+            var criteria = await GetCriteriaForTaskAsync(taskId);
+            var existingMarks = await _context.Marks
+                .Where(m => m.TeamId == teamId && m.RegistrationId == expertRegistrationId && m.TaskCriteria.TaskId == taskId)
+                .ToDictionaryAsync(m => m.TaskCriteriaId);
+            foreach (var c in criteria)
+            {
+                if (existingMarks.TryGetValue(c.CriteriaId, out var mark))
+                {
+                    c.Mark = mark.Mark1 ?? 0;
+                    c.Comment = mark.Description ?? "";
+                }
+            }
+            return criteria;
+        }
+        public async Task<int> GetUserRoleOnHakatonByTaskAsync(int taskId, int currentUserId)
+        {
+            var hakatonId = await _context.Tasks
+                .Where(t => t.Id == taskId)
+                .Select(t => t.Stage.HakatonId)
+                .FirstOrDefaultAsync();
+            if (hakatonId == 0) return 0;
+            var role = await GetUserRoleOnHakatonAsync(hakatonId, currentUserId);
+            return role ?? 0;
+        }
+
+        public async Task<List<CriteriaMarkDto>> GetDetailedMarksForTeamTaskAsync(int teamId, int taskId)
+        {
+            var criteria = await GetCriteriaForTaskAsync(taskId);
+            var marks = await _context.Marks
+                .Where(m => m.TeamId == teamId && m.TaskCriteria.TaskId == taskId)
+                .GroupBy(m => m.TaskCriteriaId)
+                .Select(g => new { CriteriaId = g.Key, AvgMark = g.Average(m => m.Mark1) ?? 0 })
+                .ToListAsync();
+            foreach (var c in criteria)
+            {
+                var mark = marks.FirstOrDefault(m => m.CriteriaId == c.CriteriaId);
+                c.Mark = mark?.AvgMark ?? 0;
+            }
+            return criteria;
+        }
+
+        public async Task<decimal?> GetAverageScoreForTeamTaskAsync(int teamId, int taskId)
+        {
+            return await _context.Marks
+                .Where(m => m.TeamId == teamId && m.TaskCriteria.TaskId == taskId)
+                .AverageAsync(m => m.Mark1);
+        }
+
     }
 }
   

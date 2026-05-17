@@ -90,6 +90,11 @@ namespace HakatonApplication.ViewModel
         public IAsyncRelayCommand<UserDto> RemoveUserFromTeamCommand { get; }
 
 
+        public IAsyncRelayCommand<TaskViewModel> OpenMarksViewCommand { get; }
+        public IAsyncRelayCommand<TaskViewModel> OpenRatingCommand { get; }
+
+        [ObservableProperty] private bool _canEvaluate; 
+
         public HakatonDetailViewModel(IHakatonService hakatonService)
         {
             _hakatonService = hakatonService;
@@ -110,6 +115,8 @@ namespace HakatonApplication.ViewModel
             DeleteTeamCommand = new AsyncRelayCommand(DeleteTeamAsync);
             AddUserToTeamCommand = new AsyncRelayCommand(AddUserToTeamAsync);
             RemoveUserFromTeamCommand = new AsyncRelayCommand<UserDto>(RemoveUserFromTeamAsync);
+            OpenMarksViewCommand = new AsyncRelayCommand<TaskViewModel>(OpenMarksView);
+            OpenRatingCommand = new AsyncRelayCommand<TaskViewModel>(OpenRating);
         }
 
         partial void OnHakatonIdChanged(int value)
@@ -169,6 +176,7 @@ namespace HakatonApplication.ViewModel
                     SelectedTeam = Teams.FirstOrDefault(t => t.Id == _selectedTeamIdToRestore);
                     _selectedTeamIdToRestore = 0;
                 }
+                CanEvaluate = IsOrganizer || details.CurrentUserRoleId == 2;
             }
             finally
             {
@@ -410,6 +418,37 @@ namespace HakatonApplication.ViewModel
             await LoadDetailsAsync();
             if (currentTeamId.HasValue)
                 SelectedTeam = Teams.FirstOrDefault(t => t.Id == currentTeamId.Value);
+        }
+
+        [RelayCommand]
+        private async Task OpenSolutions(TaskViewModel task)
+        {
+            var win = new SolutionsWindow(task.Id, AppState.CurrentUserId, _hakatonService);
+            win.Owner = Application.Current.MainWindow;
+            win.ShowDialog();
+        }
+
+
+        private async Task OpenMarksView(TaskViewModel task)
+        {
+            var win = new MarksViewWindow(task.Id, _hakatonService);
+            win.Owner = Application.Current.MainWindow;
+            win.ShowDialog();
+        }
+
+        private async Task OpenRating(TaskViewModel task)
+        {
+            var role = await _hakatonService.GetUserRoleOnHakatonAsync(HakatonId, AppState.CurrentUserId);
+            if (role != 2 && role != 3)
+            {
+                MessageBox.Show("Только эксперты и организаторы могут оценивать решения.");
+                return;
+            }
+            var registration = await _hakatonService.GetUserRegistrationOnHakatonAsync(HakatonId, AppState.CurrentUserId);
+            if (registration == null) return;
+            var win = new MarksViewWindow(task.Id, _hakatonService, registration.Id);
+            win.Owner = Application.Current.MainWindow;
+            win.ShowDialog();
         }
     }
     public partial class StageViewModel : ObservableObject
