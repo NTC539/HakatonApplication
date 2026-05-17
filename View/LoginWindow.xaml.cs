@@ -1,29 +1,36 @@
-﻿using HakatonApplication.ViewModel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using HakatonApplication.ViewModel;
 
 namespace HakatonApplication.View
 {
-    /// <summary>
-    /// Логика взаимодействия для LoginWindow.xaml
-    /// </summary>
     public partial class LoginWindow : Window
     {
+        public LoginViewModel ViewModel;
+
         public LoginWindow(LoginViewModel viewModel)
         {
             InitializeComponent();
             DataContext = viewModel;
+            ViewModel = viewModel;
+        }
+
+        private void SwitchMode_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SwitchMode();
+        }
+
+        private async void Login_Click(object sender, RoutedEventArgs e)
+        {
+            string password = LoginPasswordBox.Password;
+            await ViewModel.LoginWithPasswordAsync(password);
+        }
+
+        private async void Register_Click(object sender, RoutedEventArgs e)
+        {
+            string password = RegPasswordBox.Password;
+            string confirm = RegConfirmPasswordBox.Password;
+            await ViewModel.RegisterWithPasswordsAsync(password, confirm);
         }
     }
 }

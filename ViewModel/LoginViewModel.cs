@@ -1,18 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using HakatonApplication.DTO;
 using HakatonApplication.Message;
 using HakatonApplication.Service;
 using HakatonApplication.View;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
 namespace HakatonApplication.ViewModel
-
 {
     public partial class LoginViewModel : ObservableObject
     {
@@ -20,7 +17,6 @@ namespace HakatonApplication.ViewModel
         private readonly IHakatonService _hakatonService;
 
         [ObservableProperty] private string _email = "";
-        [ObservableProperty] private string _password = "";
         [ObservableProperty] private string _errorMessage = "";
         [ObservableProperty] private bool _isLoading;
         [ObservableProperty] private bool _isRegisterMode;
@@ -30,32 +26,20 @@ namespace HakatonApplication.ViewModel
         [ObservableProperty] private string _regPatronymic = "";
         [ObservableProperty] private string _regEmail = "";
         [ObservableProperty] private string _regPhone = "";
-        [ObservableProperty] private string _regPassword = "";
-        [ObservableProperty] private string _regConfirmPassword = "";
-
-        public IAsyncRelayCommand LoginCommand { get; }
-        public IAsyncRelayCommand RegisterCommand { get; }
-        public RelayCommand SwitchModeCommand { get; }
-
-        // Событие для закрытия окна входа и открытия главного окна
-        public event System.Action? LoginSucceeded;
 
         public LoginViewModel(IAuthService authService, IHakatonService hakatonService)
         {
             _authService = authService;
             _hakatonService = hakatonService;
-            LoginCommand = new AsyncRelayCommand(LoginAsync);
-            RegisterCommand = new AsyncRelayCommand(RegisterAsync);
-            SwitchModeCommand = new RelayCommand(SwitchMode);
         }
 
-        private void SwitchMode()
+        public void SwitchMode()
         {
             IsRegisterMode = !IsRegisterMode;
             ErrorMessage = "";
         }
 
-        private async Task LoginAsync()
+        public async Task LoginWithPasswordAsync(string password)
         {
             if (IsLoading) return;
             IsLoading = true;
@@ -63,7 +47,7 @@ namespace HakatonApplication.ViewModel
 
             try
             {
-                var userId = await _authService.LoginAsync(Email, Password);
+                var userId = await _authService.LoginAsync(Email, password);
                 if (userId.HasValue)
                 {
                     AppState.CurrentUserId = userId.Value;
@@ -78,7 +62,6 @@ namespace HakatonApplication.ViewModel
                     // Закрыть окно логина
                     if (Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault() is Window loginWindow)
                         loginWindow.Close();
-                    return;
                 }
                 else
                 {
@@ -91,10 +74,10 @@ namespace HakatonApplication.ViewModel
             }
         }
 
-        private async Task RegisterAsync()
+        public async Task RegisterWithPasswordsAsync(string password, string confirmPassword)
         {
             if (IsLoading) return;
-            if (RegPassword != RegConfirmPassword)
+            if (password != confirmPassword)
             {
                 ErrorMessage = "Пароли не совпадают.";
                 return;
@@ -105,11 +88,11 @@ namespace HakatonApplication.ViewModel
 
             try
             {
-                var dto = new DTO.RegisterDto
+                var dto = new RegisterDto
                 {
                     Email = RegEmail,
                     Phone = RegPhone,
-                    Password = RegPassword,
+                    Password = password,
                     FirstName = RegFirstName,
                     LastName = RegLastName,
                     Patronymic = RegPatronymic
@@ -118,7 +101,7 @@ namespace HakatonApplication.ViewModel
                 if (userId.HasValue)
                 {
                     // Автоматический вход после регистрации
-                    var loginResult = await _authService.LoginAsync(RegEmail, RegPassword);
+                    var loginResult = await _authService.LoginAsync(RegEmail, password);
                     if (loginResult.HasValue)
                     {
                         AppState.CurrentUserId = loginResult.Value;
@@ -130,10 +113,8 @@ namespace HakatonApplication.ViewModel
                             LastName = userInfo.LastName,
                             IsAdmin = userInfo.IsAdmin
                         });
-                        // Закрыть окно логина
                         if (Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault() is Window loginWindow)
                             loginWindow.Close();
-                        return;
                     }
                 }
                 else
