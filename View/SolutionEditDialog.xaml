@@ -1,7 +1,7 @@
 ﻿<Window x:Class="HakatonApplication.View.SolutionEditDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Решение" Height="400" Width="500"
+        Title="Решение" Height="400" Width="500" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner">
     <StackPanel Margin="10">
         <TextBlock Text="Название"/>

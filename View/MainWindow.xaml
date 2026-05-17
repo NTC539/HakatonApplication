@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:view="clr-namespace:HakatonApplication.View"
         xmlns:viewModel="clr-namespace:HakatonApplication.ViewModel"
-        Title="Хакатоны" Height="800" Width="1200"
+        Title="Хакатоны" Height="800" Width="1200" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <DataTemplate DataType="{x:Type viewModel:MainWindowViewModel}">

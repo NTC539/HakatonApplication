@@ -5,15 +5,147 @@
     <Application.Resources>
         <ResourceDictionary>
 
-            <!-- Кисти -->
+            <!-- Основные цвета – спокойные, с хорошей читаемостью -->
             <SolidColorBrush x:Key="PrimaryBrush" Color="#2C3E50"/>
-            <SolidColorBrush x:Key="SecondaryBrush" Color="#3498DB"/>
-            <SolidColorBrush x:Key="AccentBrush" Color="#E74C3C"/>
+            <SolidColorBrush x:Key="SecondaryBrush" Color="#5D6D7E"/>
+            <SolidColorBrush x:Key="AccentBrush" Color="#E67E22"/>
             <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
             <SolidColorBrush x:Key="TagBackgroundBrush" Color="#ECF0F1"/>
             <SolidColorBrush x:Key="StatBackgroundBrush" Color="#F8F9FA"/>
 
-            <!-- Стиль для карточки хакатона -->
+            <!-- Кнопки: светлый фон -->
+            <Style TargetType="Button">
+                <Setter Property="Background" Value="#F0F0F0"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="#CCCCCC"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="MinWidth" Value="100"/>
+                <Setter Property="MinHeight" Value="36"/>
+                <!-- Минимальная высота, чтобы текст не ужимался -->
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Margin="{TemplateBinding Padding}">
+                                    <ContentPresenter.Resources>
+                                        <!-- Принудительный перенос текста внутри кнопки -->
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="TextAlignment" Value="Center"/>
+                                            <Setter Property="LineHeight" Value="1.2"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#E0E0E0"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Background" Value="#D0D0D0"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                    <Setter Property="Foreground" Value="#AAAAAA"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Стиль для кнопки "Назад" -->
+            <Style x:Key="BackButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  Margin="{TemplateBinding Padding}">
+                                    <ContentPresenter.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="TextAlignment" Value="Center"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#1E2B36"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Стиль DataGrid: заголовки светлые с тёмным текстом, строки читаемые -->
+            <Style TargetType="DataGrid">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="RowHeight" Value="36"/>
+                <Setter Property="HeadersVisibility" Value="Column"/>
+                <Setter Property="AutoGenerateColumns" Value="False"/>
+                <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+                <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+                <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+                <Setter Property="SelectionMode" Value="Single"/>
+                <Setter Property="BorderBrush" Value="#D0D0D0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="AlternatingRowBackground" Value="#F8F9FA"/>
+                <Setter Property="RowBackground" Value="White"/>
+            </Style>
+
+            <Style TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="#ECF0F1"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="BorderBrush" Value="#BDC3C7"/>
+                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="Height" Value="32"/>
+            </Style>
+
+            <Style TargetType="DataGridCell">
+                <Setter Property="Padding" Value="6,4"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="#D6EAF8"/>
+                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="DataGridRow">
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+
+            <!-- Остальные стили оставлены без изменений (они работают корректно) -->
             <Style x:Key="HakatonCardStyle" TargetType="Border">
                 <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
                 <Setter Property="BorderBrush" Value="#E0E0E0"/>
@@ -35,19 +167,18 @@
                 </Style.Triggers>
             </Style>
 
-            <!-- Стиль для тегов -->
             <Style x:Key="TagStyle" TargetType="Border">
                 <Setter Property="Background" Value="{StaticResource TagBackgroundBrush}"/>
                 <Setter Property="CornerRadius" Value="12"/>
                 <Setter Property="Padding" Value="8,3"/>
                 <Setter Property="Margin" Value="0,0,8,5"/>
             </Style>
+
             <Style TargetType="TextBlock" x:Key="TagTextStyle">
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
             </Style>
 
-            <!-- Стиль для блоков статистики -->
             <Style x:Key="StatBorderStyle" TargetType="Border">
                 <Setter Property="Background" Value="{StaticResource StatBackgroundBrush}"/>
                 <Setter Property="CornerRadius" Value="8"/>
@@ -55,7 +186,6 @@
                 <Setter Property="Margin" Value="0,0,10,5"/>
             </Style>
 
-            <!-- Стиль для текста заголовка -->
             <Style TargetType="TextBlock" x:Key="HakatonTitleStyle">
                 <Setter Property="FontSize" Value="22"/>
                 <Setter Property="FontWeight" Value="Bold"/>
@@ -63,7 +193,6 @@
                 <Setter Property="Margin" Value="0,0,0,5"/>
             </Style>
 
-            <!-- Стиль для описания -->
             <Style TargetType="TextBlock" x:Key="DescriptionStyle">
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="Foreground" Value="#555"/>
@@ -71,33 +200,95 @@
                 <Setter Property="Margin" Value="0,0,0,12"/>
             </Style>
 
-            <!-- Стиль для секций (Спонсоры, Эксперты) -->
             <Style TargetType="TextBlock" x:Key="SectionHeaderStyle">
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Margin" Value="0,0,0,5"/>
                 <Setter Property="FontSize" Value="13"/>
             </Style>
 
-            <!-- Глобальный стиль для кнопок поиска -->
-            <Style TargetType="Button">
-                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+            <Style TargetType="DatePicker">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Padding" Value="5,3"/>
+                <Setter Property="Margin" Value="0,3,0,8"/>
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Setter Property="Width" Value="160"/>
+            </Style>
+
+            <Style TargetType="Calendar">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#B0B0B0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize" Value="12"/>
+            </Style>
+
+            <Style TargetType="CalendarItem">
+                <Setter Property="Background" Value="#2C3E50"/>
                 <Setter Property="Foreground" Value="White"/>
-                <Setter Property="Padding" Value="12,6"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Cursor" Value="Hand"/>
+            </Style>
+
+            <Style TargetType="TextBox">
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Padding" Value="5,3"/>
+                <Setter Property="Margin" Value="0,3,0,8"/>
+                <Setter Property="BorderBrush" Value="#CCC"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize" Value="13"/>
+            </Style>
+
+            <Style TargetType="ComboBox">
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Padding" Value="5,3"/>
+                <Setter Property="Margin" Value="0,3,0,8"/>
+                <Setter Property="BorderBrush" Value="#CCC"/>
+                <Setter Property="FontSize" Value="13"/>
+            </Style>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="Margin" Value="0,0,0,4"/>
+            </Style>
+
+            <Style TargetType="TabItem">
+                <Setter Property="FontSize" Value="14"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Background" Value="#ECF0F1"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="Padding" Value="15,8"/>
+                <Setter Property="BorderBrush" Value="#BDC3C7"/>
+                <Setter Property="BorderThickness" Value="1,1,1,0"/>
+                <Setter Property="Margin" Value="0,0,2,0"/>
                 <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                        <Setter Property="BorderThickness" Value="1,1,1,0"/>
+                    </Trigger>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#2980B9"/>
+                        <Setter Property="Background" Value="#D6EAF8"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
-            <Style x:Key="BackButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-                <Setter Property="Foreground" Value="White"/>
-                <Setter Property="Padding" Value="10,5"/>
-                <Setter Property="Margin" Value="0,0,0,10"/>
+            <Style TargetType="TabControl">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#BDC3C7"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="10"/>
+            </Style>
+
+            <Style TargetType="PasswordBox">
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Padding" Value="5,3"/>
+                <Setter Property="Margin" Value="0,3,0,8"/>
+                <Setter Property="BorderBrush" Value="#CCC"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
             </Style>
 
         </ResourceDictionary>
