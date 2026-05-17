@@ -6,6 +6,7 @@ using HakatonApplication.Service;
 using HakatonApplication.View;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -47,6 +48,17 @@ namespace HakatonApplication.ViewModel
 
             try
             {
+                if (!IsValidEmail(Email))
+                {
+                    ErrorMessage = "Введите корректный email (например, user@example.com).";
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    ErrorMessage = "Пароль не может быть пустым.";
+                    return;
+                }
+
                 var userId = await _authService.LoginAsync(Email, password);
                 if (userId.HasValue)
                 {
@@ -77,30 +89,84 @@ namespace HakatonApplication.ViewModel
         public async Task RegisterWithPasswordsAsync(string password, string confirmPassword)
         {
             if (IsLoading) return;
-            if (password != confirmPassword)
-            {
-                ErrorMessage = "Пароли не совпадают.";
-                return;
-            }
-
             IsLoading = true;
             ErrorMessage = "";
 
             try
             {
+                if (string.IsNullOrWhiteSpace(RegLastName))
+                {
+                    ErrorMessage = "Фамилия обязательна для заполнения.";
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(RegFirstName))
+                {
+                    ErrorMessage = "Имя обязательно для заполнения.";
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(RegEmail))
+                {
+                    ErrorMessage = "Email обязателен для заполнения.";
+                    return;
+                }
+
+                if (!IsValidEmail(RegEmail))
+                {
+                    ErrorMessage = "Введите корректный email (например, user@example.com).";
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(RegPhone) && !IsValidPhone(RegPhone))
+                {
+                    ErrorMessage = "Телефон должен содержать только цифры, пробелы, знак + и дефисы. Пример: +7 123 456-78-90";
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    ErrorMessage = "Пароль не может быть пустым.";
+                    return;
+                }
+                if (password.Length < 6)
+                {
+                    ErrorMessage = "Пароль должен содержать не менее 6 символов.";
+                    return;
+                }
+                if (password != confirmPassword)
+                {
+                    ErrorMessage = "Пароли не совпадают.";
+                    return;
+                }
+
+                if (RegLastName.Length > 50)
+                {
+                    ErrorMessage = "Фамилия не должна превышать 50 символов.";
+                    return;
+                }
+                if (RegFirstName.Length > 50)
+                {
+                    ErrorMessage = "Имя не должно превышать 50 символов.";
+                    return;
+                }
+                if (RegPatronymic.Length > 50)
+                {
+                    ErrorMessage = "Отчество не должно превышать 50 символов.";
+                    return;
+                }
+
                 var dto = new RegisterDto
                 {
                     Email = RegEmail,
-                    Phone = RegPhone,
+                    Phone = string.IsNullOrWhiteSpace(RegPhone) ? null : RegPhone,
                     Password = password,
-                    FirstName = RegFirstName,
-                    LastName = RegLastName,
-                    Patronymic = RegPatronymic
+                    FirstName = RegFirstName.Trim(),
+                    LastName = RegLastName.Trim(),
+                    Patronymic = string.IsNullOrWhiteSpace(RegPatronymic) ? null : RegPatronymic.Trim()
                 };
+
                 var userId = await _authService.RegisterAsync(dto);
                 if (userId.HasValue)
                 {
-                    // Автоматический вход после регистрации
                     var loginResult = await _authService.LoginAsync(RegEmail, password);
                     if (loginResult.HasValue)
                     {
@@ -126,6 +192,36 @@ namespace HakatonApplication.ViewModel
             {
                 IsLoading = false;
             }
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+
+            try
+            {
+                var regex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase);
+                return regex.IsMatch(email);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsValidPhone(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+                return true; 
+
+            var cleaned = phone.Trim();
+            var regex = new Regex(@"^\+?[\d\s\-\(\)]{7,20}$");
+            if (!regex.IsMatch(cleaned))
+                return false;
+
+            var digits = new string(cleaned.Where(char.IsDigit).ToArray());
+            return digits.Length >= 7 && digits.Length <= 15;
         }
     }
 }
