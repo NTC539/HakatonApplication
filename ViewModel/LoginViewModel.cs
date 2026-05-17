@@ -48,16 +48,6 @@ namespace HakatonApplication.ViewModel
 
             try
             {
-                if (!IsValidEmail(Email))
-                {
-                    ErrorMessage = "Введите корректный email (например, user@example.com).";
-                    return;
-                }
-                if (string.IsNullOrWhiteSpace(password))
-                {
-                    ErrorMessage = "Пароль не может быть пустым.";
-                    return;
-                }
 
                 var userId = await _authService.LoginAsync(Email, password);
                 if (userId.HasValue)

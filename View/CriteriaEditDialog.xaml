@@ -21,6 +21,7 @@
                  Height="80" TextWrapping="Wrap" AcceptsReturn="True"
                  Margin="0,5,0,0"/>
 
+        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" Margin="0,5,0,0" TextWrapping="Wrap"/>
         <TextBlock Text="Максимальный балл" FontWeight="Bold" Margin="0,10,0,0"/>
         <TextBox Text="{Binding MaxMark, UpdateSourceTrigger=PropertyChanged}" 
                  InputScope="Number" Margin="0,5,0,0"/>

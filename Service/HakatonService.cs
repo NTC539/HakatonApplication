@@ -356,19 +356,49 @@ namespace HakatonApplication.Service
         // Criteria
         public async Task AddCriteriaAsync(TaskCriterion criteria)
         {
+            if (criteria.Criteria != null && !string.IsNullOrEmpty(criteria.Criteria.Name))
+            {
+                // Ищем существующий критерий по имени
+                var existing = await _context.Criteria
+                    .FirstOrDefaultAsync(c => c.Name == criteria.Criteria.Name);
+                if (existing != null)
+                    criteria.CriteriaId = existing.Id;
+                else
+                {
+                    _context.Criteria.Add(criteria.Criteria);
+                    await _context.SaveChangesAsync(); // сохраняем новый критерий
+                    criteria.CriteriaId = criteria.Criteria.Id;
+                }
+                criteria.Criteria = null; // убираем навигацию, чтобы EF не дублировал
+            }
             _context.TaskCriteria.Add(criteria);
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateCriteriaAsync(TaskCriterion criteria)
         {
-            var existing = await _context.TaskCriteria.FindAsync(criteria.Id);
-            if (existing != null)
+            var existing = await _context.TaskCriteria
+                .Include(tc => tc.Criteria)
+                .FirstOrDefaultAsync(tc => tc.Id == criteria.Id);
+            if (existing == null) return;
+
+            existing.Description = criteria.Description;
+            existing.MaxMark = criteria.MaxMark;
+
+            if (criteria.Criteria != null && !string.IsNullOrEmpty(criteria.Criteria.Name))
             {
-                existing.Description = criteria.Description;
-                existing.MaxMark = criteria.MaxMark;
-                await _context.SaveChangesAsync();
+                var existingCriterion = await _context.Criteria
+                    .FirstOrDefaultAsync(c => c.Name == criteria.Criteria.Name);
+                if (existingCriterion != null)
+                    existing.CriteriaId = existingCriterion.Id;
+                else
+                {
+                    _context.Criteria.Add(criteria.Criteria);
+                    await _context.SaveChangesAsync();
+                    existing.CriteriaId = criteria.Criteria.Id;
+                }
             }
+            await _context.SaveChangesAsync();
         }
 
         public async Task DeleteCriteriaAsync(int criteriaId)
@@ -739,8 +769,6 @@ namespace HakatonApplication.Service
                 .Where(m => m.TeamId == teamId && m.TaskCriteria.TaskId == taskId)
                 .AverageAsync(m => m.Mark1);
         }
-
-
     }
 }
   

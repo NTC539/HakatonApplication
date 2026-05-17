@@ -138,6 +138,7 @@ namespace HakatonApplication.ViewModel
                 EditDescription = details.Description;
                 IsOrganizer = details.CurrentUserRoleId == 3;  
                 Stages = new ObservableCollection<StageViewModel>(details.Stages);
+                Stages.OrderBy(x => x.OrderNumber);
                 Teams = new ObservableCollection<TeamViewModel>(details.Teams);
                 int currentUserId = AppState.CurrentUserId;
                 if (IsOrganizer)
@@ -265,7 +266,7 @@ namespace HakatonApplication.ViewModel
 
         private async Task AddCriteriaAsync(TaskViewModel taskVm)
         {
-            var dialog = new CriteriaEditDialog(taskId: taskVm.Id);
+            var dialog = new CriteriaEditDialog(taskId: taskVm.Id, service: _hakatonService);
             dialog.Owner = Application.Current.MainWindow;
             if (dialog.ShowDialog() == true && dialog.ResultCriteria != null)
             {

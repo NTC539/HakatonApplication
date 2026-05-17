@@ -30,6 +30,9 @@ namespace HakatonApplication.ViewModel
         [ObservableProperty]
         private string _newCriteriaName = "";
 
+        [ObservableProperty]
+        private string _errorMessage = "";
+
         public TaskCriterion? ResultCriteria { get; private set; }
 
         public IRelayCommand OkCommand { get; }
@@ -67,10 +70,26 @@ namespace HakatonApplication.ViewModel
                 AvailableCriteria = new ObservableCollection<Criterion>(list);
             }
         }
+        private bool Validate()
+        {
+            if (MaxMark == null || MaxMark < 0)
+            {
+                ErrorMessage = "Максимальный балл должен быть неотрицательным числом.";
+                return false;
+            }
+            if (MaxMark > 999999) 
+            {
+                ErrorMessage = "Максимальный балл слишком велик.";
+                return false;
+            }
+            ErrorMessage = "";
+            return true;
+        }
 
         private void Ok()
         {
-            // Определяем критерий
+            if (!Validate()) return;
+
             Criterion targetCriteria;
             if (SelectedCriteria != null && (string.IsNullOrEmpty(NewCriteriaName) || SelectedCriteria.Name == NewCriteriaName))
             {
@@ -82,7 +101,6 @@ namespace HakatonApplication.ViewModel
             }
             else
             {
-                // Нет ни выбранного, ни введённого имени – можно показать MessageBox
                 System.Windows.MessageBox.Show("Выберите или введите название критерия.", "Ошибка",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
