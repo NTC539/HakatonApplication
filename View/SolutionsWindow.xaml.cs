@@ -33,7 +33,19 @@ namespace HakatonApplication.View
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            string uri = e.Uri.OriginalString;
+            if (!Uri.IsWellFormedUriString(uri, UriKind.Absolute))
+            {
+                uri = "https://" + uri;
+            }
+            try
+            {
+                Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось открыть ссылку: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             e.Handled = true;
         }
     }

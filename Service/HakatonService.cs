@@ -528,13 +528,15 @@ namespace HakatonApplication.Service
         }
         public async Task<List<SolutionDto>> GetSolutionsForTaskAsync(int taskId, int currentUserId, bool isOrganizerOrExpert)
         {
+            var task = await _context.Tasks.FindAsync(taskId);
+            bool isPublic = task?.IsSolutionsPublic == 1;
+
             var query = _context.Solutions
                 .Include(s => s.Team)
                 .Where(s => s.Tasks.Any(t => t.Id == taskId));
 
-            if (!isOrganizerOrExpert)
+            if (!isPublic && !isOrganizerOrExpert)
             {
-                // Находим команду текущего пользователя для данного задания
                 var userTeamId = await _context.Teams
                     .Where(t => t.Hakaton.Stages.Any(s => s.Tasks.Any(t2 => t2.Id == taskId))
                                 && t.Registrations.Any(r => r.UserId == currentUserId))
@@ -669,10 +671,9 @@ namespace HakatonApplication.Service
                 .Select(t => t.Stage.HakatonId)
                 .FirstOrDefaultAsync();
             if (hakatonId == 0) return null;
-            var registration = await GetUserRegistrationOnHakatonAsync(hakatonId, userId);
-            if (registration == null) return null;
+
             var team = await _context.Teams
-                .Where(t => t.HakatonId == hakatonId && t.Registrations.Any(r => r.Id == registration.Id))
+                .Where(t => t.HakatonId == hakatonId && t.Registrations.Any(r => r.UserId == userId))
                 .FirstOrDefaultAsync();
             return team?.Id;
         }
@@ -738,6 +739,7 @@ namespace HakatonApplication.Service
                 .Where(m => m.TeamId == teamId && m.TaskCriteria.TaskId == taskId)
                 .AverageAsync(m => m.Mark1);
         }
+
 
     }
 }
