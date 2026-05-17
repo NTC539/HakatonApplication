@@ -5,6 +5,8 @@ using HakatonApplication.ViewModel;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -39,6 +41,14 @@ namespace HakatonApplication.Service
         Task<List<UserInviteDto>> GetAvailableUsersForHakatonAsync(int hakatonId);
         Task<List<Role>> GetAllRolesAsync();
 
+        Task<List<UserDto>> GetAvailableUsersForTeamAsync(int hakatonId);
+        Task<int> CreateTeamAsync(int hakatonId, string teamName);
+        Task AddUserToTeamAsync(int userId, int teamId);
+        Task RemoveUserFromTeamAsync(int userId, int teamId);
+        Task DeleteTeamAsync(int teamId);
+
+        Task<HakatonRegistration?> GetUserRegistrationOnHakatonAsync(int hakatonId, int userId);
+        Task<bool> UserHasTeamOnHakatonAsync(int hakatonId, int userId);
     }
 
     public class HakatonService : IHakatonService
@@ -175,8 +185,14 @@ namespace HakatonApplication.Service
                     {
                         Id = t.Id,
                         Name = t.Name,
-                        Members = t.Registrations.Select(r => $"{r.User.LastName} {r.User.FirstName}").ToList()
-                    }).ToList(),
+                        Members = new ObservableCollection<UserDto>(
+                             t.Registrations.Select(r => new UserDto
+                             {
+                                 Id = r.UserId,
+                                 FullName = (r.User.LastName + " " + r.User.FirstName + " " + r.User.Patronymic).Trim(),
+                                 RegistrationId = r.Id
+                             }))
+                        }).ToList(),
                     SponsorContributions = h.SponsorContributions.Select(sc => new SponsorContributionViewModel
                     {
                         Id = sc.Id,
@@ -399,6 +415,99 @@ namespace HakatonApplication.Service
         public async Task<List<Role>> GetAllRolesAsync()
         {
             return await _context.Roles.ToListAsync();
+        }
+
+        public async Task<int> CreateTeamAsync(int hakatonId, string teamName)
+        {
+            var team = new Team { HakatonId = hakatonId, Name = teamName };
+            _context.Teams.Add(team);
+            await _context.SaveChangesAsync();
+            return team.Id;
+        }
+
+        public async Task<List<UserDto>> GetAvailableUsersForTeamAsync(int hakatonId)
+        {
+            var usersInTeams = await _context.Teams
+                .Where(t => t.HakatonId == hakatonId)
+                .SelectMany(t => t.Registrations.Select(r => r.Id))
+                .ToListAsync();
+
+            var available = await _context.HakatonRegistrations
+                .Where(r => r.HakatonId == hakatonId && r.RoleId == 1 && !usersInTeams.Contains(r.Id))
+                .Select(r => new UserDto
+                {
+                    Id = r.UserId,
+                    FullName = (r.User.LastName + " " + r.User.FirstName + " " + r.User.Patronymic).Trim(),
+                    RegistrationId = r.Id
+                })
+                .ToListAsync();
+            return available;
+        }
+
+
+        public async Task AddUserToTeamAsync(int userId, int teamId)
+        {
+            var team = await _context.Teams
+                .Include(t => t.Registrations)
+                .FirstOrDefaultAsync(t => t.Id == teamId);
+            if (team == null) return;
+
+            var registration = await _context.HakatonRegistrations
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.HakatonId == team.HakatonId && r.RoleId == 1); // только участники
+            if (registration == null) return;
+
+            // Проверяем, не состоит ли уже в команде
+            if (!team.Registrations.Contains(registration))
+            {
+                team.Registrations.Add(registration);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task RemoveUserFromTeamAsync(int userId, int teamId)
+        {
+            var team = await _context.Teams
+                .Include(t => t.Registrations)
+                .FirstOrDefaultAsync(t => t.Id == teamId);
+            if (team == null) return;
+
+            var registration = await _context.HakatonRegistrations
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.HakatonId == team.HakatonId);
+            if (registration == null) return;
+
+            if (team.Registrations.Contains(registration))
+            {
+                team.Registrations.Remove(registration);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteTeamAsync(int teamId)
+        {
+            var team = await _context.Teams
+                .Include(t => t.Registrations)
+                .FirstOrDefaultAsync(t => t.Id == teamId);
+            if (team != null)
+            {
+                team.Registrations.Clear(); 
+                _context.Teams.Remove(team);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<HakatonRegistration?> GetUserRegistrationOnHakatonAsync(int hakatonId, int userId)
+        {
+            return await _context.HakatonRegistrations
+                .FirstOrDefaultAsync(r => r.HakatonId == hakatonId && r.UserId == userId);
+        }
+
+        public async Task<bool> UserHasTeamOnHakatonAsync(int hakatonId, int userId)
+        {
+            var registration = await GetUserRegistrationOnHakatonAsync(hakatonId, userId);
+            if (registration == null) return false;
+            return await _context.Teams
+                .Where(t => t.HakatonId == hakatonId)
+                .AnyAsync(t => t.Registrations.Any(r => r.Id == registration.Id));
         }
     }
 }

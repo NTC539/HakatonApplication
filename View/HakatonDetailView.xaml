@@ -118,14 +118,56 @@
             </TabItem>
 
             <TabItem Header="Команды">
-                
-                <DataGrid ItemsSource="{Binding Teams}" AutoGenerateColumns="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
-                        <DataGridTextColumn Header="Участники" Binding="{Binding MembersString}"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </TabItem>
+
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Левая панель: список команд -->
+                        <StackPanel Grid.Column="0" Margin="5">
+                            <TextBlock Text="Команды" FontWeight="Bold"/>
+                        <ListBox ItemsSource="{Binding Teams}" SelectedItem="{Binding SelectedTeam}" DisplayMemberPath="Name" Height="200"/>
+                        <StackPanel Visibility="{Binding IsOrganizer, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,10,0,0">
+                            <TextBox Text="{Binding NewTeamName}" Margin="0,5,0,5" ToolTip="Название команды"/>
+                            <Button Content="Создать команду" Command="{Binding CreateTeamCommand}"/>
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding CanCreateTeam, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,10,0,0">
+                            <TextBox Text="{Binding NewTeamName}" Margin="0,5,0,5" ToolTip="Название команды"/>
+                            <Button Content="Создать команду" Command="{Binding CreateTeamCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                        <!-- Правая панель: управление участниками выбранной команды -->
+                        <StackPanel Grid.Column="1" Margin="5">
+                            <TextBlock Text="Участники команды" FontWeight="Bold"/>
+                            <ListBox ItemsSource="{Binding SelectedTeam.Members}" Height="150">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding FullName}" Width="300"/>
+                                            <Button Content="✖" Command="{Binding DataContext.RemoveUserFromTeamCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Visibility="{Binding DataContext.IsOrganizer, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <!-- Добавление участников (только организатор) -->
+                        <StackPanel Visibility="{Binding CanAddUsersToTeam, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,10,0,0">
+                            <TextBlock Text="Добавить участника (не в команде)"/>
+                            <ComboBox ItemsSource="{Binding AvailableParticipants}" DisplayMemberPath="FullName" SelectedItem="{Binding SelectedUserForTeam}" Margin="0,5,0,5"/>
+                            <Button Content="Добавить в команду" Command="{Binding AddUserToTeamCommand}"/>
+                        </StackPanel>
+
+
+                        <!-- Кнопка удаления команды (только организатор) -->
+                            <Button Content="Удалить команду" Command="{Binding DeleteTeamCommand}" 
+                    Visibility="{Binding IsOrganizer, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,10,0,0" Background="Red" Foreground="White"/>
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
 
             <TabItem Header="Управление участниками" Visibility="{Binding IsOrganizer, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel Margin="10">
