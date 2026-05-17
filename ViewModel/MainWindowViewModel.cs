@@ -50,6 +50,7 @@ namespace HakatonApplication.ViewModel
 
             WeakReferenceMessenger.Default.Register<NavigationMessage>(this, OnNavigationMessage);
             WeakReferenceMessenger.Default.Register<LoginSuccessMessage>(this, OnLoginSuccess);
+            WeakReferenceMessenger.Default.Register<OpenLoginMessage>(this, (r, m) => OpenLogin());
         }
 
         private async Task LoadHakatonsAsync() => await LoadDataAsync(null);
@@ -144,4 +145,5 @@ namespace HakatonApplication.ViewModel
             CurrentViewModel = detailVm;
         }
     }
+    public class OpenLoginMessage { }
 }

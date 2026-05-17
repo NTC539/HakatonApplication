@@ -34,6 +34,11 @@ namespace HakatonApplication.Service
 
         Task<List<Criterion>> GetAllCriteriaAsync();
 
+        Task<bool> IsUserRegisteredOnHakatonAsync(int hakatonId, int userId);
+        Task RegisterUserOnHakatonAsync(int hakatonId, int userId, int roleId = 1); 
+        Task<List<UserInviteDto>> GetAvailableUsersForHakatonAsync(int hakatonId);
+        Task<List<Role>> GetAllRolesAsync();
+
     }
 
     public class HakatonService : IHakatonService
@@ -346,6 +351,54 @@ namespace HakatonApplication.Service
         public async Task<List<Criterion>> GetAllCriteriaAsync()
         {
             return await _context.Criteria.ToListAsync();
+        }
+
+        public async Task<bool> IsUserRegisteredOnHakatonAsync(int hakatonId, int userId)
+        {
+            return await _context.HakatonRegistrations
+                .AnyAsync(r => r.HakatonId == hakatonId && r.UserId == userId);
+        }
+
+        public async Task RegisterUserOnHakatonAsync(int hakatonId, int userId, int roleId = 1)
+        {
+            var existing = await _context.HakatonRegistrations
+                .FirstOrDefaultAsync(r => r.HakatonId == hakatonId && r.UserId == userId);
+            if (existing != null) return;
+
+            var registration = new HakatonRegistration
+            {
+                HakatonId = hakatonId,
+                UserId = userId,
+                RoleId = roleId,
+                RegistrationDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+            };
+            _context.HakatonRegistrations.Add(registration);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<UserInviteDto>> GetAvailableUsersForHakatonAsync(int hakatonId)
+        {
+            // Все пользователи, у которых ещё нет регистрации на этот хакатон
+            var registeredUserIds = await _context.HakatonRegistrations
+                .Where(r => r.HakatonId == hakatonId)
+                .Select(r => r.UserId)
+                .ToListAsync();
+
+            var users = await _context.Users
+                .Where(u => !registeredUserIds.Contains(u.Id))
+                .Select(u => new UserInviteDto
+                {
+                    Id = u.Id,
+                    FullName = (u.LastName + " " + u.FirstName + " " + u.Patronymic).Trim(),
+                    Email = u.Contact != null ? u.Contact.Email : ""
+                })
+                .ToListAsync();
+            return users;
+        }
+
+        public async Task<List<Role>> GetAllRolesAsync()
+        {
+            return await _context.Roles.ToListAsync();
         }
     }
 }

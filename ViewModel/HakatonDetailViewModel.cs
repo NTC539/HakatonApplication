@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using HakatonApplication.DTO;
 using HakatonApplication.Message;
 using HakatonApplication.Models;
 using HakatonApplication.Service;
@@ -60,6 +61,20 @@ namespace HakatonApplication.ViewModel
         public IAsyncRelayCommand<CriteriaViewModel> EditCriteriaCommand { get; }
         public IAsyncRelayCommand<CriteriaViewModel> DeleteCriteriaCommand { get; }
 
+
+        [ObservableProperty] private bool _canRegister;
+        [ObservableProperty] private string _registrationMessage = "";
+        [ObservableProperty] private ObservableCollection<UserInviteDto> _availableUsers = new();
+        [ObservableProperty] private UserInviteDto? _selectedUser;
+        [ObservableProperty] private ObservableCollection<Role> _availableRoles = new();
+        [ObservableProperty] private Role? _selectedRole;
+        [ObservableProperty] private bool _showInvitePanel;
+
+        public IAsyncRelayCommand RegisterCurrentUserCommand { get; }
+        public IAsyncRelayCommand AddUserToHakatonCommand { get; }
+
+
+
         public HakatonDetailViewModel(IHakatonService hakatonService)
         {
             _hakatonService = hakatonService;
@@ -74,6 +89,8 @@ namespace HakatonApplication.ViewModel
             AddCriteriaCommand = new AsyncRelayCommand<TaskViewModel>(AddCriteriaAsync);
             EditCriteriaCommand = new AsyncRelayCommand<CriteriaViewModel>(EditCriteriaAsync);
             DeleteCriteriaCommand = new AsyncRelayCommand<CriteriaViewModel>(DeleteCriteriaAsync);
+            RegisterCurrentUserCommand = new AsyncRelayCommand(RegisterCurrentUserAsync);
+            AddUserToHakatonCommand = new AsyncRelayCommand(AddUserToHakatonAsync);
         }
 
         partial void OnHakatonIdChanged(int value)
@@ -98,6 +115,10 @@ namespace HakatonApplication.ViewModel
                 Teams = new ObservableCollection<TeamViewModel>(details.Teams);
                 SponsorContributions = new ObservableCollection<SponsorContributionViewModel>(details.SponsorContributions);
                 PrizeFunds = new ObservableCollection<PrizeFundViewModel>(details.PrizeFunds);
+                CanRegister = details.CurrentUserRoleId == 0 && AppState.CurrentUserId > 0;
+                ShowInvitePanel = IsOrganizer;
+                if (IsOrganizer)
+                    await LoadAvailableUsersAsync();
             }
             finally
             {
@@ -222,6 +243,44 @@ namespace HakatonApplication.ViewModel
         {
             WeakReferenceMessenger.Default.Send(new NavigationMessage(typeof(MainWindowViewModel)));
         }
+
+        private async Task RegisterCurrentUserAsync()
+        {
+            if (AppState.CurrentUserId == 0)
+            {
+                // Можно открыть окно логина через сообщение
+                WeakReferenceMessenger.Default.Send(new OpenLoginMessage());
+                return;
+            }
+            await _hakatonService.RegisterUserOnHakatonAsync(HakatonId, AppState.CurrentUserId, 1);
+            RegistrationMessage = "Вы успешно зарегистрированы на хакатон!";
+            await LoadDetailsAsync(); // обновить страницу – должен измениться CurrentUserRoleId
+        }
+
+        private async Task AddUserToHakatonAsync()
+        {
+            if (SelectedUser == null || SelectedRole == null) return;
+
+            var user = SelectedUser;
+            var role = SelectedRole;
+
+            await _hakatonService.RegisterUserOnHakatonAsync(HakatonId, user.Id, role.Id);
+
+            // Обновить список доступных пользователей (это сбросит SelectedUser и SelectedRole)
+            await LoadAvailableUsersAsync();
+
+            RegistrationMessage = $"Пользователь {user.FullName} добавлен с ролью {role.Name}";
+        }
+
+        private async Task LoadAvailableUsersAsync()
+        {
+            var users = await _hakatonService.GetAvailableUsersForHakatonAsync(HakatonId);
+            AvailableUsers = new ObservableCollection<UserInviteDto>(users);
+            var roles = await _hakatonService.GetAllRolesAsync();
+            AvailableRoles = new ObservableCollection<Role>(roles);
+            SelectedRole = AvailableRoles.FirstOrDefault(r => r.Id == 1); // участник по умолчанию
+        }
+
     }
 
     // Вспомогательные ViewModel (без изменений, но для полноты оставлены)

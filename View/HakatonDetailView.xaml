@@ -21,7 +21,13 @@
                     Command="{Binding GoBackCommand}"
                     Style="{StaticResource BackButtonStyle}"/>
             <TextBlock Text="{Binding Name}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
-            <TextBlock Text="{Binding Description}" FontSize="16" Margin="0,10,0,20"/>
+            <TextBlock Text="{Binding Description}" FontSize="16" Margin="0,10,0,20" TextWrapping="Wrap"/>
+            <!-- Кнопка участия (если не зарегистрирован) -->
+            <Button Content="Участвовать" Command="{Binding RegisterCurrentUserCommand}" 
+        Visibility="{Binding CanRegister, Converter={StaticResource BooleanToVisibilityConverter}}"
+        HorizontalAlignment="Left" Margin="0,10,0,0"/>
+
+            <TextBlock Text="{Binding RegistrationMessage}" Foreground="Green" Margin="0,5,0,0"/>
         </StackPanel>
 
         <!-- Панель редактирования названия/описания (только для организатора) -->
@@ -112,12 +118,25 @@
             </TabItem>
 
             <TabItem Header="Команды">
+                
                 <DataGrid ItemsSource="{Binding Teams}" AutoGenerateColumns="False">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
                         <DataGridTextColumn Header="Участники" Binding="{Binding MembersString}"/>
                     </DataGrid.Columns>
                 </DataGrid>
+            </TabItem>
+
+            <TabItem Header="Управление участниками" Visibility="{Binding IsOrganizer, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Добавить пользователя на хакатон" FontWeight="Bold"/>
+                    <ComboBox ItemsSource="{Binding AvailableUsers}" DisplayMemberPath="FullName" 
+                  SelectedItem="{Binding SelectedUser}" Margin="0,5,0,5"/>
+                    <ComboBox ItemsSource="{Binding AvailableRoles}" DisplayMemberPath="Name" 
+                  SelectedItem="{Binding SelectedRole}" Margin="0,5,0,5"/>
+                    <Button Content="Добавить" Command="{Binding AddUserToHakatonCommand}" Margin="0,5,0,5"/>
+                    <TextBlock Text="{Binding RegistrationMessage}" Foreground="Green"/>
+                </StackPanel>
             </TabItem>
 
             <TabItem Header="Призы и спонсоры">
