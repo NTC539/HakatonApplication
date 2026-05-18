@@ -18,7 +18,7 @@ namespace HakatonApplication.Converter
             {
                 1 => new SolidColorBrush(Colors.Green),
                 2 => new SolidColorBrush(Colors.Orange),
-                3 => new SolidColorBrush(Colors.Blue),
+                3 => new SolidColorBrush(Colors.CornflowerBlue),
                 _ => new SolidColorBrush(Colors.Gray)
             };
         }

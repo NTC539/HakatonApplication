@@ -1,4 +1,5 @@
 ﻿using HakatonApplication.Models;
+using HakatonApplication.Service;
 using HakatonApplication.ViewModel;
 using System;
 using System.Collections.Generic;
@@ -24,10 +25,10 @@ namespace HakatonApplication.View
         public StageEditViewModel ViewModel { get; }
         public Stage? ResultStage => ViewModel.ResultStage;
 
-        public StageEditDialog(Stage? existingStage = null)
+        public StageEditDialog(IHakatonService service, Stage ? existingStage = null)
         {
             InitializeComponent();
-            ViewModel = new StageEditViewModel(existingStage);
+            ViewModel = new StageEditViewModel(service, existingStage);
             DataContext = ViewModel;
             ViewModel.CloseRequest += (s, e) => DialogResult = true;
         }

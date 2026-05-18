@@ -66,6 +66,11 @@ namespace HakatonApplication.Service
 
         Task<List<CriteriaMarkDto>> GetDetailedMarksForTeamTaskAsync(int teamId, int taskId);
         Task<decimal?> GetAverageScoreForTeamTaskAsync(int teamId, int taskId);
+
+        Task<List<Location>> GetAllLocationsAsync();
+        Task AddLocationAsync(Location location);
+        Task<List<StageType>> GetAllStageTypesAsync();
+        Task AddStageTypeAsync(StageType stageType);
     }
 
     public class HakatonService : IHakatonService
@@ -325,7 +330,6 @@ namespace HakatonApplication.Service
             }
         }
 
-        // Task (задания)
         public async Task AddTaskAsync(StageTask task)
         {
             _context.Tasks.Add(task);
@@ -353,12 +357,10 @@ namespace HakatonApplication.Service
             }
         }
 
-        // Criteria
         public async Task AddCriteriaAsync(TaskCriterion criteria)
         {
             if (criteria.Criteria != null && !string.IsNullOrEmpty(criteria.Criteria.Name))
             {
-                // Ищем существующий критерий по имени
                 var existing = await _context.Criteria
                     .FirstOrDefaultAsync(c => c.Name == criteria.Criteria.Name);
                 if (existing != null)
@@ -366,10 +368,10 @@ namespace HakatonApplication.Service
                 else
                 {
                     _context.Criteria.Add(criteria.Criteria);
-                    await _context.SaveChangesAsync(); // сохраняем новый критерий
+                    await _context.SaveChangesAsync(); 
                     criteria.CriteriaId = criteria.Criteria.Id;
                 }
-                criteria.Criteria = null; // убираем навигацию, чтобы EF не дублировал
+                criteria.Criteria = null; 
             }
             _context.TaskCriteria.Add(criteria);
             await _context.SaveChangesAsync();
@@ -503,7 +505,6 @@ namespace HakatonApplication.Service
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.HakatonId == team.HakatonId && r.RoleId == 1); // только участники
             if (registration == null) return;
 
-            // Проверяем, не состоит ли уже в команде
             if (!team.Registrations.Contains(registration))
             {
                 team.Registrations.Add(registration);
@@ -604,7 +605,6 @@ namespace HakatonApplication.Service
                     Source = dto.Source
                 };
                 _context.Solutions.Add(solution);
-                // Добавляем связь с заданием через навигационную коллекцию
                 var task = await _context.Tasks.FindAsync(dto.TaskId);
                 if (task == null) throw new InvalidOperationException($"Task with id {dto.TaskId} not found");
                 solution.Tasks.Add(task);
@@ -769,6 +769,11 @@ namespace HakatonApplication.Service
                 .Where(m => m.TeamId == teamId && m.TaskCriteria.TaskId == taskId)
                 .AverageAsync(m => m.Mark1);
         }
+
+        public async Task<List<Location>> GetAllLocationsAsync() => await _context.Locations.ToListAsync();
+        public async Task AddLocationAsync(Location location) { _context.Locations.Add(location); await _context.SaveChangesAsync(); }
+        public async Task<List<StageType>> GetAllStageTypesAsync() => await _context.StageTypes.ToListAsync();
+        public async Task AddStageTypeAsync(StageType stageType) { _context.StageTypes.Add(stageType); await _context.SaveChangesAsync(); }
     }
 }
   

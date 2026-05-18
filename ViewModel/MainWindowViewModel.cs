@@ -96,7 +96,7 @@ namespace HakatonApplication.ViewModel
             UserName = $"{message.FirstName} {message.LastName}".Trim();
             IsCurrentUserAdmin = message.IsAdmin;
             AppState.CurrentUserId = message.UserId;
-            _ = LoadHakatonsAsync(); // перезагрузить список (чтобы обновить роль пользователя в карточках)
+            _ = LoadHakatonsAsync(); 
         }
 
         private void OnNavigationMessage(object recipient, NavigationMessage message)
@@ -112,22 +112,6 @@ namespace HakatonApplication.ViewModel
                 CurrentViewModel = this;
                 _ = LoadHakatonsAsync();
             }
-            // Для страниц участника/эксперта – проверка IsAuthenticated
-            //else if (message.ViewModelType == typeof(ParticipantDashboardViewModel))
-            //{
-            //    if (IsAuthenticated)
-            //    {
-            //        var participantVm = _serviceProvider.GetRequiredService<ParticipantDashboardViewModel>();
-            //        CurrentViewModel = participantVm;
-            //    }
-            //    else
-            //    {
-            //        MessageBox.Show("Для доступа к этой странице необходимо войти.", "Требуется авторизация",
-            //            MessageBoxButton.OK, MessageBoxImage.Information);
-            //        OpenLogin();
-            //    }
-            //}
-            // Аналогично для эксперта
         }
 
         [RelayCommand]

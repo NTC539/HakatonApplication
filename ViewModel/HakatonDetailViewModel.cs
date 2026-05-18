@@ -197,7 +197,7 @@ namespace HakatonApplication.ViewModel
 
         private async Task AddStageAsync()
         {
-            var dialog = new StageEditDialog();
+            var dialog = new StageEditDialog(_hakatonService);
             dialog.Owner = Application.Current.MainWindow;
             if (dialog.ShowDialog() == true && dialog.ResultStage != null)
             {
@@ -211,7 +211,7 @@ namespace HakatonApplication.ViewModel
         {
             var stage = await _hakatonService.GetStageByIdAsync(stageVm.Id);
             if (stage == null) return;
-            var dialog = new StageEditDialog(stage);
+            var dialog = new StageEditDialog(_hakatonService, stage);
             dialog.Owner = Application.Current.MainWindow;
             if (dialog.ShowDialog() == true && dialog.ResultStage != null)
             {
@@ -345,7 +345,7 @@ namespace HakatonApplication.ViewModel
             AvailableUsers = new ObservableCollection<UserInviteDto>(users);
             var roles = await _hakatonService.GetAllRolesAsync();
             AvailableRoles = new ObservableCollection<Role>(roles);
-            SelectedRole = AvailableRoles.FirstOrDefault(r => r.Id == 1); // участник по умолчанию
+            SelectedRole = AvailableRoles.FirstOrDefault(r => r.Id == 1); 
         }
 
         private async Task CreateTeamAsync()
